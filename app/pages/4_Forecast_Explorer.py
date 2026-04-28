@@ -342,7 +342,7 @@ with tab1:
         paper_bgcolor="#FFFDF0",
         font=dict(color="#1E3A5F")
     )
-    st.plotly_chart(fig_daily, use_container_width=True)
+    st.plotly_chart(fig_daily, width='stretch')
     st.markdown("<div class='chart-caption'>Daily energy forecast with ±12% confidence intervals. Hover over bars to see exact values.</div>", unsafe_allow_html=True)
 
 with tab2:
@@ -393,9 +393,9 @@ with tab2:
         plot_bgcolor="#FFFDF0",
         paper_bgcolor="#FFFDF0",
         font=dict(color="#1E3A5F"),
-        xaxis=dict(tickformat="%H:%M")
+        xaxis=dict(tickformat="%H:%M"),
     )
-    st.plotly_chart(fig_hourly, use_container_width=True)
+    st.plotly_chart(fig_hourly, width='stretch')
     st.markdown("<div class='chart-caption'>Hourly forecast for today with 88-112% confidence band (amber shading). Peak production expected around solar noon.</div>", unsafe_allow_html=True)
 
 st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
@@ -445,7 +445,7 @@ st.markdown(f"""
 # Try to display SHAP chart if it exists
 if SHAP_CHART_PATH.exists():
     st.markdown("<div class='section-header'>📊 SHAP Feature Importance</div>", unsafe_allow_html=True)
-    st.image(str(SHAP_CHART_PATH), caption="SHAP beeswarm plot showing feature contributions to predictions", use_container_width=True)
+    st.image(str(SHAP_CHART_PATH), caption="SHAP beeswarm plot showing feature contributions to predictions", width='stretch')
     st.markdown("<div class='chart-caption'>Beeswarm plot: each dot represents a prediction. Position shows feature impact on model output.</div>", unsafe_allow_html=True)
 
 st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)

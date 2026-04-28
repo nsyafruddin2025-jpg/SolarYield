@@ -62,7 +62,7 @@ table_cols = {
 
 st.dataframe(
     anomalies[list(table_cols.keys())].rename(columns=table_cols),
-    use_container_width=True,
+    width='stretch',
     hide_index=True,
 )
 
@@ -86,7 +86,7 @@ fig = px.bar(
     color_continuous_scale="Reds",
 )
 fig.update_layout(height=350)
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width='stretch')
 
 # ------------------------------------------------------------------
 # Monthly anomaly distribution
@@ -114,7 +114,7 @@ fig2 = px.bar(
     color_continuous_scale="Reds",
 )
 fig2.update_layout(height=300)
-st.plotly_chart(fig2, use_container_width=True)
+st.plotly_chart(fig2, width='stretch')
 
 # ------------------------------------------------------------------
 # Explanation

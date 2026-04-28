@@ -104,7 +104,7 @@ fig_bar = px.bar(
     color_discrete_map={True: "#ef4444", False: "#3b82f6"},
 )
 fig_bar.update_layout(showlegend=False, height=350)
-st.plotly_chart(fig_bar, use_container_width=True)
+st.plotly_chart(fig_bar, width='stretch')
 
 # ------------------------------------------------------------------
 # Chart 2: Capacity Factor Trend (past 90 days)
@@ -125,7 +125,7 @@ fig_line = px.line(
     markers=True,
 )
 fig_line.update_layout(height=350)
-st.plotly_chart(fig_line, use_container_width=True)
+st.plotly_chart(fig_line, width='stretch')
 
 # ------------------------------------------------------------------
 # Chart 3: Actual vs Predicted Scatter (past 30 days)
@@ -163,7 +163,7 @@ fig_scatter.add_trace(go.Scatter(
     hoverinfo="skip",
 ))
 fig_scatter.update_layout(height=400)
-st.plotly_chart(fig_scatter, use_container_width=True)
+st.plotly_chart(fig_scatter, width='stretch')
 
 # ------------------------------------------------------------------
 # Footer

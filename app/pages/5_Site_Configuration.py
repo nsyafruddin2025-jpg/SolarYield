@@ -356,7 +356,7 @@ with st.form("site_config_form"):
 
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        submitted = st.form_submit_button("💾 Save Configuration", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("💾 Save Configuration", type="primary", width='stretch')
 
     if submitted:
         st.success("Configuration saved! Forecast Explorer will use these parameters.")

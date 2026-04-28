@@ -74,7 +74,7 @@ display_cols = [
 
 st.dataframe(
     filtered[display_cols],
-    use_container_width=True,
+    width='stretch',
     hide_index=False,
 )
 
@@ -88,7 +88,7 @@ st.subheader("📋 Summary Statistics")
 summary_cols = ["GHI", "temperature", "cloud_cover", "humidity", "kWh_output"]
 stats = filtered[summary_cols].describe().T
 stats["missing"] = filtered[summary_cols].isnull().sum()
-st.dataframe(stats, use_container_width=True)
+st.dataframe(stats, width='stretch')
 
 # ------------------------------------------------------------------
 # Export to CSV
