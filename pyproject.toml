@@ -30,6 +30,10 @@ dependencies = [
     # Utilities
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
+    # Dashboard
+    "streamlit>=1.40.0",
+    "pandas>=2.0.0",
+    "plotly>=5.0.0",
 ]
 
 [project.optional-dependencies]

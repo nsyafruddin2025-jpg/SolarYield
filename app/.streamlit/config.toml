@@ -1,0 +1,15 @@
+[server]
+headless = true
+
+[runner]
+magicEnabled = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#F4A836"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#FFF9E6"
+textColor = "#1E3A5F"
+font = "sans serif"

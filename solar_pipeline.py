@@ -354,6 +354,8 @@ def save_to_csv(df: pd.DataFrame, output_path: str) -> None:
     columns = [
         "timestamp",
         "GHI",
+        "direct_radiation",
+        "diffuse_radiation",
         "temperature",
         "cloud_cover",
         "humidity",
