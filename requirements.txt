@@ -9,3 +9,6 @@ requests
 pvlib
 python-dotenv
 tenacity
+joblib
+scikit-learn
+shap
