@@ -13,6 +13,8 @@ import streamlit as st
 
 st.set_page_config(page_title="Data Explorer — SolarYield", layout="wide")
 
+st.sidebar.image("app/assets/logo.png", width=120)
+
 # ------------------------------------------------------------------
 # Load data
 # ------------------------------------------------------------------
@@ -74,7 +76,7 @@ display_cols = [
 
 st.dataframe(
     filtered[display_cols],
-    width='stretch',
+    use_container_width=True,
     hide_index=False,
 )
 
@@ -88,7 +90,7 @@ st.subheader("📋 Summary Statistics")
 summary_cols = ["GHI", "temperature", "cloud_cover", "humidity", "kWh_output"]
 stats = filtered[summary_cols].describe().T
 stats["missing"] = filtered[summary_cols].isnull().sum()
-st.dataframe(stats, width='stretch')
+st.dataframe(stats, use_container_width=True)
 
 # ------------------------------------------------------------------
 # Export to CSV

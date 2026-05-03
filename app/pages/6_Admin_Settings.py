@@ -160,6 +160,8 @@ st.markdown("""
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="wide")
 
+st.sidebar.image("app/assets/logo.png", width=120)
+
 # ------------------------------------------------------------------
 # Navy gradient banner header
 # ------------------------------------------------------------------
@@ -206,7 +208,7 @@ with col1:
 with col2:
     st.write("")
     st.write("")
-    copy_clicked = st.button("📋 Copy API Key", width='stretch')
+    copy_clicked = st.button("📋 Copy API Key", use_container_width=True)
 
 if copy_clicked:
     st.success("API key copied to clipboard")
@@ -214,7 +216,7 @@ if copy_clicked:
 col1, col2 = st.columns(2)
 
 with col1:
-    regen_clicked = st.button("🔄 Regenerate Key", width='stretch')
+    regen_clicked = st.button("🔄 Regenerate Key", use_container_width=True)
 
 if regen_clicked:
     st.warning("Are you sure? This will invalidate your current key.")
@@ -252,9 +254,9 @@ with col1:
 with col2:
     st.write("")
     st.write("")
-    upgrade_clicked = st.button("⬆️ Upgrade to Enterprise", width='stretch', type="primary")
+    upgrade_clicked = st.button("⬆️ Upgrade to Enterprise", use_container_width=True, type="primary")
     st.write("")
-    invoice_clicked = st.button("📄 Download Invoice", width='stretch')
+    invoice_clicked = st.button("📄 Download Invoice", use_container_width=True)
 
 if upgrade_clicked:
     st.info("Enterprise plan includes unlimited sites, custom ML model, white-label option, and dedicated support. Contact sales@solaryield.io")
@@ -355,12 +357,12 @@ st.markdown("""
 col1, col2 = st.columns(2)
 
 with col1:
-    delete_clicked = st.button("🗑️ Delete Account", width='stretch', type="secondary")
+    delete_clicked = st.button("🗑️ Delete Account", use_container_width=True, type="secondary")
     if delete_clicked:
         st.error("Account deletion requires confirmation from admin@solaryield.io. This action cannot be undone.")
 
 with col2:
-    export_clicked = st.button("📤 Export All Data", width='stretch', type="secondary")
+    export_clicked = st.button("📤 Export All Data", use_container_width=True, type="secondary")
     if export_clicked:
         st.success("Data export initiated. You will receive a download link at nadya@solaryield.io within 1 hour.")
 

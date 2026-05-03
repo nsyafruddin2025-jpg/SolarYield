@@ -16,6 +16,8 @@ SYSTEM_CAPACITY_KW = 5000.0
 
 st.set_page_config(page_title="Anomaly Log — SolarYield", layout="wide")
 
+st.sidebar.image("app/assets/logo.png", width=120)
+
 # ------------------------------------------------------------------
 # Load data
 # ------------------------------------------------------------------
@@ -62,7 +64,7 @@ table_cols = {
 
 st.dataframe(
     anomalies[list(table_cols.keys())].rename(columns=table_cols),
-    width='stretch',
+    use_container_width=True,
     hide_index=True,
 )
 
@@ -86,7 +88,7 @@ fig = px.bar(
     color_continuous_scale="Reds",
 )
 fig.update_layout(height=350)
-st.plotly_chart(fig, width='stretch')
+st.plotly_chart(fig, use_container_width=True)
 
 # ------------------------------------------------------------------
 # Monthly anomaly distribution
@@ -114,7 +116,7 @@ fig2 = px.bar(
     color_continuous_scale="Reds",
 )
 fig2.update_layout(height=300)
-st.plotly_chart(fig2, width='stretch')
+st.plotly_chart(fig2, use_container_width=True)
 
 # ------------------------------------------------------------------
 # Explanation

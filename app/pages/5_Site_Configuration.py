@@ -126,6 +126,8 @@ st.markdown("""
 
 st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="wide")
 
+st.sidebar.image("app/assets/logo.png", width=120)
+
 # ------------------------------------------------------------------
 # Navy gradient banner header
 # ------------------------------------------------------------------
@@ -356,7 +358,7 @@ with st.form("site_config_form"):
 
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        submitted = st.form_submit_button("💾 Save Configuration", type="primary", width='stretch')
+        submitted = st.form_submit_button("💾 Save Configuration", type="primary", use_container_width=True)
 
     if submitted:
         st.success("Configuration saved! Forecast Explorer will use these parameters.")
