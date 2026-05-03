@@ -56,7 +56,6 @@ st.set_page_config(
 )
 
 import os
-st.sidebar.image("app/assets/logo.png", width=120)
 
 # ------------------------------------------------------------------
 # Custom CSS
@@ -343,6 +342,7 @@ today = latest_date.date() if hasattr(latest_date, 'date') else latest_date
 # ------------------------------------------------------------------
 
 with st.sidebar:
+    st.sidebar.image("app/assets/logo.png", width=120)
     st.markdown("""
     <div class="solar-logo">
         <span class="solar-logo-icon">☀️</span>
