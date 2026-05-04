@@ -62,9 +62,11 @@ def load_hourly_data():
 # Live Forecast Functions (Open-Meteo API)
 # ------------------------------------------------------------------
 
-@st.cache_data(ttl=3600)
 def fetch_forecast():
-    """Fetch 7-day weather forecast from Open-Meteo API for Singapore."""
+    """Fetch 7-day weather forecast from Open-Meteo API for Singapore.
+
+    Note: Not cached - always fetches fresh data to get accurate forward dates.
+    """
     # Singapore coordinates
     lat = 1.3521
     lon = 103.8198
@@ -607,85 +609,27 @@ with chart_col:
     </div>
     """, unsafe_allow_html=True)
 
+    # Debug: show current date
+    st.caption(f"Debug: Today is {datetime.now().strftime('%Y-%m-%d')}")
+
     # Fetch live forecast
     forecast_data = fetch_forecast()
-    forecast_df = run_forecast(forecast_data)
 
-    if forecast_df is not None and len(forecast_df) > 0:
-        forecast_avg = forecast_df["forecast_kwh"].mean()
+    # Check if API returned valid data
+    if forecast_data is None:
+        st.error("❌ Open-Meteo API call failed. Cannot fetch live weather data.")
 
-        fig_trend = go.Figure()
-
-        # Bar chart for daily forecast
-        fig_trend.add_trace(go.Bar(
-            x=forecast_df["date_str"],
-            y=forecast_df["forecast_kwh"],
-            name="Forecasted Yield",
-            marker_color="#F4A836",
-            hovertemplate="<b>%{x}</b><br>Forecast: %{y:,.0f} kWh<extra></extra>"
-        ))
-
-        # Forecast average line
-        fig_trend.add_trace(go.Scatter(
-            x=forecast_df["date_str"],
-            y=[forecast_avg] * len(forecast_df),
-            mode="lines",
-            name=f"Avg ({forecast_avg:,.0f} kWh)",
-            line=dict(color="#22c55e", width=2, dash="dash"),
-            hovertemplate="Average: %{y:,.0f} kWh<extra></extra>"
-        ))
-
-        fig_trend.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#0d2137",
-            plot_bgcolor="#0d2137",
-            font=dict(color="#e2e8f0"),
-            height=350,
-            showlegend=True,
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
-            ),
-            xaxis=dict(
-                title="",
-                gridcolor="rgba(255,255,255,0.1)"
-            ),
-            yaxis=dict(
-                title="Energy (kWh)",
-                gridcolor="rgba(255,255,255,0.1)"
-            )
-        )
-        st.plotly_chart(fig_trend, use_container_width=True)
-
-        # Caption
-        st.markdown(
-            "<div style='text-align:center;color:#64748b;font-size:0.8rem;margin-top:0.5rem;'>"
-            "Forward forecast using live Singapore weather data from Open-Meteo API · GradientBoosting model · MAPE 6.1%"
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-        # Update KPIs with forecast data
-        total_forecast_kwh = forecast_df["forecast_kwh"].sum()
-        today_forecast_kwh = forecast_df["forecast_kwh"].iloc[0] if len(forecast_df) > 0 else 0
-        forecast_co2_offset = total_forecast_kwh * CO2_FACTOR_KG_PER_KWH
-    else:
-        # Fallback to historical if API fails
+        # Show last 7 days of historical data as fallback
         last_7_days = daily_df.tail(7).copy()
         last_7_days["date_str"] = pd.to_datetime(last_7_days["date"]).dt.strftime("%a %b %d")
-        total_forecast_kwh = last_7_days["actual_kwh"].sum()
-        today_forecast_kwh = last_7_days["actual_kwh"].iloc[-1]
-        forecast_co2_offset = total_forecast_kwh * CO2_FACTOR_KG_PER_KWH
+        st.caption(f"Debug: Using historical data - dates: {last_7_days['date_str'].tolist()}")
 
         fig_trend = go.Figure()
         fig_trend.add_trace(go.Bar(
             x=last_7_days["date_str"],
             y=last_7_days["actual_kwh"],
-            name="Historical (API Unavailable)",
-            marker_color="#64748b",
+            name="Historical Data",
+            marker_color="#F4A836",
             hovertemplate="<b>%{x}</b><br>Production: %{y:,.0f} kWh<extra></extra>"
         ))
         fig_trend.update_layout(
@@ -700,12 +644,105 @@ with chart_col:
             yaxis=dict(title="Energy (kWh)", gridcolor="rgba(255,255,255,0.1)")
         )
         st.plotly_chart(fig_trend, use_container_width=True)
-        st.markdown(
-            "<div style='text-align:center;color:#ef4444;font-size:0.8rem;margin-top:0.5rem;'>"
-            "⚠️ Open-Meteo API unavailable · Showing historical data"
-            "</div>",
-            unsafe_allow_html=True
-        )
+
+        total_forecast_kwh = last_7_days["actual_kwh"].sum()
+        today_forecast_kwh = last_7_days["actual_kwh"].iloc[-1]
+        forecast_co2_offset = total_forecast_kwh * CO2_FACTOR_KG_PER_KWH
+    else:
+        # Process forecast data
+        forecast_df = run_forecast(forecast_data)
+
+        if forecast_df is None or len(forecast_df) == 0:
+            st.error("❌ Open-Meteo API returned no usable forecast data.")
+            last_7_days = daily_df.tail(7).copy()
+            last_7_days["date_str"] = pd.to_datetime(last_7_days["date"]).dt.strftime("%a %b %d")
+            fig_trend = go.Figure()
+            fig_trend.add_trace(go.Bar(
+                x=last_7_days["date_str"],
+                y=last_7_days["actual_kwh"],
+                name="Historical Data",
+                marker_color="#F4A836",
+                hovertemplate="<b>%{x}</b><br>Production: %{y:,.0f} kWh<extra></extra>"
+            ))
+            fig_trend.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#0d2137",
+                plot_bgcolor="#0d2137",
+                font=dict(color="#e2e8f0"),
+                height=350,
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                xaxis=dict(title="", gridcolor="rgba(255,255,255,0.1)"),
+                yaxis=dict(title="Energy (kWh)", gridcolor="rgba(255,255,255,0.1)")
+            )
+            st.plotly_chart(fig_trend, use_container_width=True)
+            total_forecast_kwh = last_7_days["actual_kwh"].sum()
+            today_forecast_kwh = last_7_days["actual_kwh"].iloc[-1]
+            forecast_co2_offset = total_forecast_kwh * CO2_FACTOR_KG_PER_KWH
+        else:
+            # Debug: print the dates from the forecast
+            st.caption(f"Debug: Forecast dates from Open-Meteo: {forecast_df['date_str'].tolist()}")
+
+            forecast_avg = forecast_df["forecast_kwh"].mean()
+
+            fig_trend = go.Figure()
+
+            # Bar chart for daily forecast - EXPLICIT amber color
+            fig_trend.add_trace(go.Bar(
+                x=forecast_df["date_str"],
+                y=forecast_df["forecast_kwh"],
+                name="Forecasted Yield",
+                marker_color="#F4A836",
+                hovertemplate="<b>%{x}</b><br>Forecast: %{y:,.0f} kWh<extra></extra>"
+            ))
+
+            # Forecast average line
+            fig_trend.add_trace(go.Scatter(
+                x=forecast_df["date_str"],
+                y=[forecast_avg] * len(forecast_df),
+                mode="lines",
+                name=f"Avg ({forecast_avg:,.0f} kWh)",
+                line=dict(color="#22c55e", width=2, dash="dash"),
+                hovertemplate="Average: %{y:,.0f} kWh<extra></extra>"
+            ))
+
+            fig_trend.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#0d2137",
+                plot_bgcolor="#0d2137",
+                font=dict(color="#e2e8f0"),
+                height=350,
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                xaxis=dict(
+                    title="",
+                    gridcolor="rgba(255,255,255,0.1)"
+                ),
+                yaxis=dict(
+                    title="Energy (kWh)",
+                    gridcolor="rgba(255,255,255,0.1)"
+                )
+            )
+            st.plotly_chart(fig_trend, use_container_width=True)
+
+            # Caption
+            st.markdown(
+                "<div style='text-align:center;color:#64748b;font-size:0.8rem;margin-top:0.5rem;'>"
+                "Forward forecast using live Singapore weather data from Open-Meteo API · GradientBoosting model · MAPE 6.1%"
+                "</div>",
+                unsafe_allow_html=True
+            )
+
+            # Update KPIs with forecast data
+            total_forecast_kwh = forecast_df["forecast_kwh"].sum()
+            today_forecast_kwh = forecast_df["forecast_kwh"].iloc[0] if len(forecast_df) > 0 else 0
+            forecast_co2_offset = total_forecast_kwh * CO2_FACTOR_KG_PER_KWH
 
     # Two column charts below
     pie_col, gauge_col = st.columns(2)
