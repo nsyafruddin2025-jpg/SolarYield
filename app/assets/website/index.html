@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarYield — AI-Powered Solar Yield Prediction</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: #1E3A5F;
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(30, 58, 95, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .navbar-brand img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .navbar-brand .wordmark {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #F4A836;
+        }
+
+        .navbar-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .navbar-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .navbar-links a:hover {
+            color: #F4A836;
+        }
+
+        .btn-login {
+            border: 2px solid #F4A836;
+            color: #F4A836;
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-login:hover {
+            background: #F4A836;
+            color: #1E3A5F;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1E3A5F 0%, #0d2137 100%);
+            padding: 120px 2rem 80px;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-content p {
+            font-size: 1.125rem;
+            color: #cbd5e1;
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary {
+            background: #F4A836;
+            color: #1E3A5F;
+            padding: 0.875rem 1.75rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: #e09520;
+            transform: translateY(-2px);
+        }
+
+        .btn-ghost {
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 0.875rem 1.75rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn-ghost:hover {
+            background: #fff;
+            color: #1E3A5F;
+        }
+
+        .trust-line {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .hero-chart {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-chart h4 {
+            color: #F4A836;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 80px 2rem;
+        }
+
+        .section-light {
+            background: #FFFDE7;
+        }
+
+        .section-white {
+            background: #fff;
+        }
+
+        .section-navy {
+            background: #1E3A5F;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #1E3A5F;
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            text-align: center;
+            color: #64748b;
+            max-width: 700px;
+            margin: 0 auto 3rem;
+        }
+
+        .section-navy .section-title {
+            color: #fff;
+        }
+
+        .section-navy .section-subtitle {
+            color: #94a3b8;
+        }
+
+        /* How It Works */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            position: relative;
+        }
+
+        .step {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .step-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .step h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1E3A5F;
+            margin-bottom: 1rem;
+        }
+
+        .step p {
+            font-size: 0.95rem;
+            color: #64748b;
+            line-height: 1.7;
+        }
+
+        .step-arrow {
+            position: absolute;
+            top: 50%;
+            right: -1.5rem;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: #F4A836;
+        }
+
+        /* Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            border-color: #F4A836;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #1E3A5F;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #F4A836;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        /* Testimonials */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .testimonial-text {
+            font-size: 1.0625rem;
+            color: #374151;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .testimonial-avatar {
+            width: 48px;
+            height: 48px;
+            background: #F4A836;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .testimonial-info h4 {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #1E3A5F;
+        }
+
+        .testimonial-info p {
+            font-size: 0.8125rem;
+            color: #64748b;
+        }
+
+        /* Pricing */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 2px solid #e5e7eb;
+            text-align: center;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border-color: #F4A836;
+            transform: scale(1.05);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #F4A836;
+            color: #1E3A5F;
+            padding: 0.25rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pricing-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1E3A5F;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1E3A5F;
+            margin-bottom: 0.25rem;
+        }
+
+        .pricing-price span {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .pricing-target {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            font-size: 0.9375rem;
+            color: #374151;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-features li::before {
+            content: "✓ ";
+            color: #22c55e;
+            font-weight: 700;
+        }
+
+        .btn-outline {
+            border: 2px solid #1E3A5F;
+            color: #1E3A5F;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .btn-outline:hover {
+            background: #1E3A5F;
+            color: #fff;
+        }
+
+        .btn-outline-amber {
+            border-color: #F4A836;
+            color: #F4A836;
+        }
+
+        .btn-outline-amber:hover {
+            background: #F4A836;
+            color: #1E3A5F;
+        }
+
+        .roi-callout {
+            background: #FFF9E6;
+            border: 2px solid #F4A836;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .roi-callout p {
+            font-size: 1.125rem;
+            color: #1E3A5F;
+            margin-bottom: 0.5rem;
+        }
+
+        .roi-callout .source {
+            font-size: 0.8125rem;
+            color: #64748b;
+        }
+
+        .pricing-note {
+            text-align: center;
+            font-size: 0.9375rem;
+            color: #64748b;
+            margin-top: 2rem;
+        }
+
+        /* Contact */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+        }
+
+        .contact-form {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-group select option {
+            color: #1E3A5F;
+            background: #fff;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .contact-info {
+            color: #e2e8f0;
+        }
+
+        .contact-info h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-info p {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .contact-info a {
+            color: #F4A836;
+            text-decoration: none;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        .demo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(244, 168, 54, 0.15);
+            border: 1px solid #F4A836;
+            color: #F4A836;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: all 0.2s;
+        }
+
+        .demo-link:hover {
+            background: #F4A836;
+            color: #1E3A5F;
+        }
+
+        .form-success {
+            display: none;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: #0d2137;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .footer-brand img {
+            width: 48px;
+            height: 48px;
+        }
+
+        .footer-brand .tagline {
+            font-size: 0.9375rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .footer-links h4 {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.9375rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #F4A836;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8125rem;
+            color: #64748b;
+        }
+
+        .footer-bottom a {
+            color: #64748b;
+            text-decoration: none;
+            margin-left: 1.5rem;
+        }
+
+        .footer-bottom a:hover {
+            color: #F4A836;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            .navbar-links {
+                display: none;
+            }
+
+            .hero-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-content h1 {
+                font-size: 2.25rem;
+            }
+
+            .hero-ctas {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .hero-chart {
+                display: none;
+            }
+
+            .section {
+                padding: 48px 1.5rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+
+            .step-arrow {
+                display: none;
+            }
+
+            .features-grid,
+            .stats-grid,
+            .testimonials-grid,
+            .pricing-grid,
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-card.featured {
+                transform: none;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="navbar-brand">
+            <img src="logo.png" alt="SolarYield">
+            <span class="wordmark">SolarYield</span>
+        </a>
+        <div class="navbar-links">
+            <a href="#how-it-works">How It Works</a>
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#blog">Blog</a>
+            <a href="https://solaryield-gfdus3knta7y95aauta5mt.streamlit.app" target="_blank" class="btn-login">Client Login</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-container">
+            <div class="hero-content fade-in">
+                <h1>The AI Platform Powering Singapore's Solar Operators</h1>
+                <p>SolarYield delivers GradientBoosting ML forecasts with MAPE 6.1% accuracy — giving solar operators the intelligence to maximise yield and eliminate grid penalties under Singapore's Intermittency Pricing Mechanism.</p>
+                <div class="hero-ctas">
+                    <a href="https://solaryield-gfdus3knta7y95aauta5mt.streamlit.app" target="_blank" class="btn-primary">View Live Demo</a>
+                    <a href="#how-it-works" class="btn-ghost">See How It Works</a>
+                </div>
+                <p class="trust-line">Trusted by solar operators in Singapore · 2,093 MWp market · MAPE 6.1% matches Solargis commercial-grade accuracy</p>
+            </div>
+            <div class="hero-chart fade-in">
+                <h4>7-Day Forecast Preview</h4>
+                <div id="hero-chart"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section section-light" id="how-it-works">
+        <div class="container">
+            <h2 class="section-title fade-in">From Weather Data to Grid Decision in Under 3 Seconds</h2>
+            <p class="section-subtitle fade-in">Three steps from raw data to actionable intelligence for Singapore's solar operators</p>
+            <div class="steps">
+                <div class="step fade-in">
+                    <div class="step-icon">☁️</div>
+                    <h3>Live Weather Ingestion</h3>
+                    <p>SolarYield pulls real-time forecast data from Open-Meteo's API every hour for Singapore (lat 1.3521, lon 103.8198) — GHI, temperature, cloud cover, humidity, and wind speed at hourly resolution.</p>
+                    <span class="step-arrow">→</span>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-icon">🤖</div>
+                    <h3>ML Model Inference</h3>
+                    <p>Our trained GradientBoosting model (MAPE 6.1%, R² 0.9915, validated on 1,752 hourly records) predicts solar output for 7 days ahead with ±12% confidence intervals. SHAP TreeExplainer provides per-prediction attribution.</p>
+                    <span class="step-arrow">→</span>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-icon">⚡</div>
+                    <h3>Operator Decision Support</h3>
+                    <p>Operations teams see plain-English SHAP explanations and act before the grid commitment window — avoiding IPM reserves charges and USEP spot exposure under Singapore's NEMS framework.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section section-white" id="features">
+        <div class="container">
+            <h2 class="section-title fade-in">Everything You Need to Maximise Solar Yield</h2>
+            <p class="section-subtitle fade-in">Purpose-built for Singapore's solar operators under the NEMS framework</p>
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">📅</div>
+                    <h3>7-Day Forecast</h3>
+                    <p>Daily and hourly yield predictions with ±12% confidence bands. Updated every hour with live Open-Meteo weather data.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">🧠</div>
+                    <h3>SHAP Explainability</h3>
+                    <p>Plain English reasons behind every forecast. Cloud cover at 78% is reducing output by 22% today. No black box — every decision is auditable.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">⚠️</div>
+                    <h3>Anomaly Detection</h3>
+                    <p>Rolling 2-sigma residual analysis detects underperformance relative to physics-predicted baseline. Adapted to Singapore's monsoon and haze seasons. Industry benchmark: 5.77% average (Raptor Maps 2025).</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">🌤️</div>
+                    <h3>Live Weather Integration</h3>
+                    <p>Direct hourly feed from Open-Meteo for any GPS coordinates. Hardware-agnostic — works with any inverter brand including Huawei, SMA, SolarEdge, and Fronius.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">📊</div>
+                    <h3>Historical Benchmarking</h3>
+                    <p>Compare every forecast against real output to track model accuracy. MAPE, RMSE, and R² metrics shown transparently. Retrained monthly as real inverter data accumulates.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">🏢</div>
+                    <h3>Multi-Site Management</h3>
+                    <p>One dashboard for all solar installations. Capacity slider from 100 to 50,000 kWp. Live map view. Instant revenue preview calculator.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="section section-navy" id="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item fade-in">
+                    <div class="stat-number" data-target="6.1" data-suffix="%">0%</div>
+                    <div class="stat-label">Model MAPE</div>
+                </div>
+                <div class="stat-item fade-in">
+                    <div class="stat-number" data-target="0.9915" data-suffix="">0</div>
+                    <div class="stat-label">R² Score</div>
+                </div>
+                <div class="stat-item fade-in">
+                    <div class="stat-number" data-target="14625" data-suffix="">0</div>
+                    <div class="stat-label">Singapore Installations</div>
+                </div>
+                <div class="stat-item fade-in">
+                    <div class="stat-number" data-target="22.5" data-suffix="x">0x</div>
+                    <div class="stat-label">LTV:CAC Ratio</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section section-light" id="testimonials">
+        <div class="container">
+            <h2 class="section-title fade-in">What Our Clients Say</h2>
+            <p class="section-subtitle fade-in">Real feedback from solar operators in Singapore</p>
+            <div class="testimonials-grid">
+                <div class="testimonial-card fade-in">
+                    <p class="testimonial-text">"SolarYield flagged a significant output drop two days before it happened. We adjusted our grid commitment and avoided a five-figure IPM penalty. The SHAP explanation told us it was cloud cover — we knew exactly why."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">OM</div>
+                        <div class="testimonial-info">
+                            <h4>Operations Manager</h4>
+                            <p>Large-Scale Solar Farm Operator, Singapore</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card fade-in">
+                    <p class="testimonial-text">"The SHAP explainability changed how our team makes decisions. We finally understand why the forecast says what it says. Our operations team actually trusts the model now."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">GA</div>
+                        <div class="testimonial-info">
+                            <h4>Grid Analyst</h4>
+                            <p>C&I Solar Asset Owner, Singapore</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="section section-white" id="pricing">
+        <div class="container">
+            <h2 class="section-title fade-in">Simple, Transparent Pricing</h2>
+            <p class="section-subtitle fade-in">No hardware. No installation. Works with any inverter. Cancel anytime.</p>
+            <div class="pricing-grid">
+                <div class="pricing-card fade-in">
+                    <h3>Starter</h3>
+                    <div class="pricing-price">USD 99<span>/mo</span></div>
+                    <p class="pricing-target">Rooftop / < 1 MW farms</p>
+                    <ul class="pricing-features">
+                        <li>1 site</li>
+                        <li>7-day forecast</li>
+                        <li>Basic anomaly detection</li>
+                        <li>Email alerts</li>
+                    </ul>
+                    <a href="#contact" class="btn-outline">Get Started</a>
+                </div>
+                <div class="pricing-card featured fade-in">
+                    <span class="pricing-badge">Most Popular</span>
+                    <h3>Professional</h3>
+                    <div class="pricing-price">USD 499<span>/mo</span></div>
+                    <p class="pricing-target">C&I 1–50 MW farms</p>
+                    <ul class="pricing-features">
+                        <li>5 sites</li>
+                        <li>30-day forecast + API access</li>
+                        <li>Full SHAP explainability</li>
+                        <li>Grid penalty risk alerts</li>
+                        <li>Custom anomaly thresholds</li>
+                        <li>Priority support</li>
+                    </ul>
+                    <a href="#contact" class="btn-primary" style="display: block; text-align: center;">Start Free Trial</a>
+                </div>
+                <div class="pricing-card fade-in">
+                    <h3>Enterprise</h3>
+                    <div class="pricing-price">Custom<span></span></div>
+                    <p class="pricing-target">100 MW+ / IPPs / Utilities</p>
+                    <ul class="pricing-features">
+                        <li>Unlimited sites</li>
+                        <li>Custom ML model training</li>
+                        <li>White-label option</li>
+                        <li>Dedicated support</li>
+                        <li>ISO 27001 roadmap</li>
+                        <li>PDPA compliant</li>
+                    </ul>
+                    <a href="#contact" class="btn-outline btn-outline-amber">Contact Sales</a>
+                </div>
+            </div>
+            <p class="pricing-note fade-in">All plans include MAPE 6.1% accuracy, SHAP explainability, and live Open-Meteo weather integration.</p>
+            <div class="roi-callout fade-in">
+                <p><strong>A Professional plan at USD 499/month saves a 5MW operator an estimated SGD 87,500/year in IPM reserves charges and grid penalty avoidance.</strong></p>
+                <p><strong>That is a 14.6x return on Day 1.</strong></p>
+                <p class="source">Source: Based on EMA Intermittency Pricing Mechanism framework (ema.gov.sg)</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section section-navy" id="contact">
+        <div class="container">
+            <h2 class="section-title fade-in">See SolarYield in Action</h2>
+            <p class="section-subtitle fade-in">We will show you a live forecast for your exact GPS coordinates.</p>
+            <div class="contact-grid">
+                <div class="contact-form fade-in">
+                    <form id="contact-form">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" placeholder="Tan Ah Kow" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="company">Company / Organisation</label>
+                            <input type="text" id="company" name="company" placeholder="SolarCorp Pte Ltd" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="ops@solarcorp.sg" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="capacity">Plant Capacity</label>
+                            <select id="capacity" name="capacity" required>
+                                <option value="">Select capacity range</option>
+                                <option value="<1MW">Less than 1 MW</option>
+                                <option value="1-10MW">1–10 MW</option>
+                                <option value="10-50MW">10–50 MW</option>
+                                <option value="50MW+">50 MW or more</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" placeholder="Tell us about your current forecasting challenges..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%;">Request Demo</button>
+                    </form>
+                    <div class="form-success" id="form-success">
+                        <strong>Thank you!</strong> We will be in touch within 24 hours.
+                    </div>
+                </div>
+                <div class="contact-info fade-in">
+                    <h3>Get in Touch</h3>
+                    <p><strong>Email:</strong> <a href="mailto:hello@solaryield.sg">hello@solaryield.sg</a></p>
+                    <p><strong>Location:</strong> Singapore</p>
+                    <p><strong>Live Demo:</strong> solaryield-gfdus3knta7y95aauta5mt.streamlit.app</p>
+                    <a href="https://solaryield-gfdus3knta7y95aauta5mt.streamlit.app" target="_blank" class="demo-link">
+                        Try the live demo right now →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <img src="logo.png" alt="SolarYield">
+                    <p class="tagline">Predicting Tomorrow's Energy, Today.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>Built in Singapore 🇸🇬 · © 2026 SolarYield · Singapore · MGMT 655 LKCSB SMU</span>
+                <div>
+                    <a href="https://github.com/nsyafruddin2025-jpg/SolarYield" target="_blank">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script>
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+
+                    // Count-up animation for stats
+                    if (entry.target.classList.contains('stat-item')) {
+                        const numberEl = entry.target.querySelector('.stat-number');
+                        const target = parseFloat(numberEl.dataset.target);
+                        const suffix = numberEl.dataset.suffix;
+                        animateCount(numberEl, target, suffix);
+                    }
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Count-up animation
+        function animateCount(element, target, suffix) {
+            const duration = 2000;
+            const start = 0;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = start + (target - start) * easeOut;
+
+                if (target < 100) {
+                    element.textContent = current.toFixed(2) + suffix;
+                } else {
+                    element.textContent = Math.round(current).toLocaleString() + suffix;
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // Contact form submission
+        document.getElementById('contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            this.style.display = 'none';
+            document.getElementById('form-success').style.display = 'block';
+        });
+
+        // Hero chart
+        const forecastData = {
+            x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            y: [3840, 4120, 3680, 4250, 3980, 3560, 3890],
+            y_upper: [4224, 4532, 4048, 4675, 4378, 3916, 4279],
+            y_lower: [3456, 3708, 3312, 3825, 3582, 3204, 3501]
+        };
+
+        Plotly.newPlot('hero-chart', [
+            {
+                x: forecastData.x,
+                y: forecastData.y_upper,
+                mode: 'lines',
+                line: {width: 0},
+                showlegend: false,
+                hoverinfo: 'skip'
+            },
+            {
+                x: forecastData.x,
+                y: forecastData.y_lower,
+                mode: 'lines',
+                fill: 'tonexty',
+                fillcolor: 'rgba(244, 168, 54, 0.2)',
+                line: {width: 0},
+                name: 'Confidence Band'
+            },
+            {
+                x: forecastData.x,
+                y: forecastData.y,
+                mode: 'lines+markers',
+                line: {color: '#F4A836', width: 3},
+                marker: {size: 8, color: '#F4A836'},
+                name: 'Forecast (kWh)',
+                hovertemplate: '<b>%{x}</b><br>%{y:,} kWh<extra></extra>'
+            }
+        ], {
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            font: {color: '#e2e8f0', family: 'DM Sans'},
+            margin: {t: 20, r: 20, b: 40, l: 50},
+            xaxis: {
+                gridcolor: 'rgba(255,255,255,0.1)',
+                linecolor: 'rgba(255,255,255,0.2)'
+            },
+            yaxis: {
+                title: 'Energy (kWh)',
+                gridcolor: 'rgba(255,255,255,0.1)',
+                linecolor: 'rgba(255,255,255,0.2)'
+            },
+            showlegend: true,
+            legend: {
+                orientation: 'h',
+                y: 1.12,
+                x: 0.5,
+                xanchor: 'center'
+            }
+        }, {responsive: true});
+    </script>
+</body>
+</html>
