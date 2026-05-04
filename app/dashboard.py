@@ -14,6 +14,19 @@ import plotly.express as px
 from datetime import datetime, timedelta
 
 # ------------------------------------------------------------------
+# Simple session state login check
+# ------------------------------------------------------------------
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+# Check for login via query parameter (set by login.html redirect)
+params = st.query_params
+if params.get("login") == "success":
+    st.session_state.logged_in = True
+    st.query_params.clear()
+
+# ------------------------------------------------------------------
 # Config
 # ------------------------------------------------------------------
 
@@ -371,6 +384,13 @@ with st.sidebar:
     st.metric("Total Days Monitored", f"{len(daily_df)}")
     st.metric("Data Quality", "99.7%")
     st.metric("Model Version", "v2.1")
+
+    st.markdown("---")
+    if st.button("🚪 Logout", use_container_width=True):
+        st.session_state.logged_in = False
+        st.markdown("""
+        <meta http-equiv="refresh" content="0; url=https://nsyafruddin2025-jpg.github.io/SolarYield/">
+        """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------
 # Navbar

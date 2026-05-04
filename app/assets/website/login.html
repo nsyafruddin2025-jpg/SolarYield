@@ -203,7 +203,8 @@
 
         const VALID_CREDENTIALS = [
             { email: 'admin@solaryield.io', password: 'SolarYield2026' },
-            { email: 'operator@sembcorp.com', password: 'Sembcorp2026' }
+            { email: 'operator@sembcorp.com', password: 'Sembcorp2026' },
+            { email: 'demo@solaryield.io', password: 'demo123' }
         ];
 
         document.getElementById('login-form').addEventListener('submit', function(e) {
@@ -223,7 +224,7 @@
 
             if (isValid) {
                 // Redirect to dashboard with login param
-                window.location.href = 'https://solaryield-gfdus3knta7y95aauta5mt.streamlit.app/?login=success';
+                window.location.href = 'https://solaryield-gfdus3knta7y95aauta5mt.streamlit.app?login=success';
             } else {
                 // Show error
                 errorMessage.style.display = 'block';
