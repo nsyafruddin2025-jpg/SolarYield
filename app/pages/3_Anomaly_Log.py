@@ -138,7 +138,7 @@ if anomaly_pct > 8:
     <h3 style='color:#DC2626; margin:0;'>🚨 High Anomaly Rate — Action Required</h3>
     <p style='color:#DC2626; margin:0.5rem 0 0;'>
     <b>{count} anomalies detected ({pct:.1f}% of {total} days).</b>
-    This exceeds the 2024 global industry average of 5.77% underperformance
+    This exceeds the 2025 global industry average of 5.77% underperformance
     (Raptor Maps Global Solar Report 2025). Systemic equipment issue likely —
     recommend immediate O&M inspection.</p>
     </div>
@@ -152,8 +152,8 @@ elif anomaly_pct > 4:
     <h3 style='color:#B45309; margin:0;'>⚠️ Elevated Anomaly Rate — Monitor Closely</h3>
     <p style='color:#92400E; margin:0.5rem 0 0;'>
     <b>{count} anomalies detected ({pct:.1f}% of {total} days).</b>
-    Above the 2023 global benchmark of 5.00% (Raptor Maps) but below
-    the 2024 average of 5.77%. Schedule preventive maintenance inspection
+    Above the 2024 global industry average of 5.77% (Raptor Maps Global Solar Report 2025).
+    Schedule preventive maintenance inspection
     within 30 days.</p>
     </div>
     """.format(count=anomaly_count, pct=anomaly_pct, total=total_days),
@@ -166,7 +166,7 @@ else:
     <h3 style='color:#15803D; margin:0;'>✅ Normal Anomaly Rate — Farm Performing Well</h3>
     <p style='color:#166534; margin:0.5rem 0 0;'>
     <b>{count} anomalies detected ({pct:.1f}% of {total} days).</b>
-    Below the 2024 global industry average of 5.77% underperformance
+    Below the 2025 global industry average of 5.77% underperformance
     (Raptor Maps Global Solar Report 2025, analysis of 193 GW of solar assets).
     This farm is outperforming industry benchmarks. No immediate action required.</p>
     </div>

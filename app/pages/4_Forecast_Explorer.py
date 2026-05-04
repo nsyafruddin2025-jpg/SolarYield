@@ -6,6 +6,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+from PIL import Image
+import os
 
 # ------------------------------------------------------------------
 # Config
@@ -271,6 +273,40 @@ fig_importance.update_layout(
 )
 st.plotly_chart(fig_importance, use_container_width=True)
 st.markdown("<div class='chart-caption'>SHAP-derived feature importance showing how much each variable contributes to model predictions on average.</div>", unsafe_allow_html=True)
+
+# ------------------------------------------------------------------
+# SHAP Beeswarm Chart
+# ------------------------------------------------------------------
+
+st.markdown("<div class='section-header'>🔍 SHAP Beeswarm Visualization</div>", unsafe_allow_html=True)
+
+shap_chart_path = "src/ml/shap_chart.png"
+if os.path.exists(shap_chart_path):
+    img = Image.open(shap_chart_path)
+    st.image(img, caption="SHAP Beeswarm Plot — Feature Impact Distribution", use_container_width=True)
+else:
+    st.info("SHAP chart not available. Train the model first using src/ml/train_models.py")
+
+# ------------------------------------------------------------------
+# Download Forecast Data
+# ------------------------------------------------------------------
+
+st.markdown("<div class='section-header'>📥 Download Forecast Data</div>", unsafe_allow_html=True)
+
+if "kWh_predicted" in df_daily.columns:
+    csv_data = df_daily[["date", "actual_kwh", "kWh_predicted"]].copy()
+    csv_data.columns = ["Date", "Actual kWh", "Predicted kWh"]
+    csv_data["Date"] = csv_data["Date"].dt.strftime("%Y-%m-%d")
+    csv_str = csv_data.to_csv(index=False)
+    st.download_button(
+        label="📥 Download Forecast Data (CSV)",
+        data=csv_str,
+        file_name="solaryield_forecast_data.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+else:
+    st.info("Predicted data not available for download.")
 
 st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 

@@ -240,3 +240,35 @@ with col1:
 with col2:
     st.markdown("#### Daily Data Summary")
     st.write(df_daily.describe())
+
+st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
+
+# ------------------------------------------------------------------
+# Download Data
+# ------------------------------------------------------------------
+
+st.markdown("<div class='section-header'>📥 Download Data</div>", unsafe_allow_html=True)
+
+col_dl1, col_dl2 = st.columns(2)
+
+with col_dl1:
+    st.markdown("#### Download Hourly Data")
+    csv_hourly = df_hourly.to_csv(index=False)
+    st.download_button(
+        label="📥 Download Hourly Data (CSV)",
+        data=csv_hourly,
+        file_name="solaryield_hourly_data.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+with col_dl2:
+    st.markdown("#### Download Daily Data")
+    csv_daily = df_daily.to_csv(index=False)
+    st.download_button(
+        label="📥 Download Daily Data (CSV)",
+        data=csv_daily,
+        file_name="solaryield_daily_data.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
