@@ -169,20 +169,20 @@ df_daily["date_str"] = df_daily["date"].dt.strftime("%Y-%m-%d")
 
 # If predicted columns exist, use them; otherwise create a smooth approximation
 if "kWh_predicted" in df_daily.columns:
-    y_actual = df_daily["kWh_output"]
+    y_actual = df_daily["actual_kwh"]
     y_pred = df_daily["kWh_predicted"]
     pred_label = "Model Prediction"
 else:
     # Create a smooth approximation based on GHI for visualization
     if "GHI" in df_daily.columns:
         ghi_max = df_daily["GHI"].max()
-        y_pred = df_daily["GHI"] / ghi_max * df_daily["kWh_output"].max()
+        y_pred = df_daily["GHI"] / ghi_max * df_daily["actual_kwh"].max()
         y_pred = y_pred * 0.98  # Slight bias to show prediction error
-        y_actual = df_daily["kWh_output"]
+        y_actual = df_daily["actual_kwh"]
         pred_label = "Physics-Based Forecast"
     else:
-        y_actual = df_daily["kWh_output"]
-        y_pred = df_daily["kWh_output"] * 1.02
+        y_actual = df_daily["actual_kwh"]
+        y_pred = df_daily["actual_kwh"] * 1.02
         pred_label = "Baseline Forecast"
 
 fig_forecast = go.Figure()
@@ -325,7 +325,7 @@ st.markdown("<div class='section-header'>📉 Prediction Confidence</div>", unsa
 
 # Calculate residuals
 if "kWh_predicted" in df_daily.columns:
-    actual = df_daily["kWh_output"]
+    actual = df_daily["actual_kwh"]
     predicted = df_daily["kWh_predicted"]
 else:
     actual = y_actual
