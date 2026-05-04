@@ -224,7 +224,7 @@ if len(df_anomalies) > 0:
     # Prepare anomaly details
     df_anomaly_detail = df_anomalies[["date", "actual_kwh", "max_ghi", "mean_temp"]].copy() if all(c in df_anomalies.columns for c in ["date", "actual_kwh", "max_ghi", "mean_temp"]) else df_anomalies[["date", "actual_kwh"]].copy()
     df_anomaly_detail["date"] = df_anomaly_detail["date"].dt.strftime("%Y-%m-%d")
-    df_anomaly_detail.columns = ["Date", "kWh", "GHI (W/m²)", "Cell Temp (°C)"] if len(df_anomaly_detail.columns) == 3 else ["Date", "kWh"]
+    df_anomaly_detail.columns = ["Date", "kWh", "GHI (W/m²)", "Cell Temp (°C)"] if len(df_anomaly_detail.columns) == 4 else ["Date", "kWh"]
 
     st.dataframe(
         df_anomaly_detail.style.set_properties(**{
