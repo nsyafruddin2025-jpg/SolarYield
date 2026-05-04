@@ -91,47 +91,73 @@ def fetch_forecast():
         return None
 
 def run_forecast(forecast_data):
-    """Process Open-Meteo data into daily yield predictions."""
-    if not forecast_data or "daily" not in forecast_data:
+    """Process Open-Meteo hourly data into daily yield predictions.
+
+    Maps API columns to physical quantities:
+    - shortwave_radiation → GHI (W/m²)
+    - direct_radiation → direct radiation (W/m²)
+    - diffuse_radiation → diffuse radiation (W/m²)
+    - temperature_2m → temperature (°C)
+    - cloud_cover → cloud_cover (%)
+    - relative_humidity_2m → humidity (%)
+    - wind_speed_10m → wind_speed (km/h)
+
+    Calculation:
+    dc_power = capacity_kw * (GHI / 1000) * (1 + temp_coefficient * (temperature - 25))
+    ac_power = dc_power * performance_ratio
+    kwh = max(0, ac_power)
+    """
+    if not forecast_data:
         return None
 
-    daily = forecast_data.get("daily", {})
-    times = daily.get("time", [])
-    radiation = daily.get("shortwave_radiation_sum", [])
-    direct_rad = daily.get("direct_radiation_sum", [])
+    hourly = forecast_data.get("hourly", {})
+    if not hourly:
+        return None
 
-    # Calculate daily yield estimates (kWh)
-    # System: 5MWp, using radiation to estimate output
-    # Formula: kWh = Radiation (MJ/m²) * System Size (kWp) * Efficiency / 3.6
-    # Or simpler: kWh = Radiation_sum (Wh/m²) * 5000 kWp * 0.15 (typical PR) / 1000
-    system_kwp = 5000  # 5MW system
+    # Extract hourly arrays
+    times = hourly.get("time", [])
+    ghi = hourly.get("shortwave_radiation", [])  # GHI in W/m²
+    direct = hourly.get("direct_radiation", [])
+    diffuse = hourly.get("diffuse_radiation", [])
+    temperature = hourly.get("temperature_2m", [])
+    cloud_cover = hourly.get("cloud_cover", [])
+    humidity = hourly.get("relative_humidity_2m", [])
+    wind_speed = hourly.get("wind_speed_10m", [])
+
+    if not times or not ghi:
+        return None
+
+    # System parameters
+    capacity_kw = 5000  # 5MW system
     performance_ratio = 0.75  # Typical PR for Singapore
+    temp_coefficient = -0.004  # -0.4% per degree above 25°C
 
-    results = []
-    for i, (time, rad, direct) in enumerate(zip(times, radiation, direct_rad)):
-        # Convert MJ to kWh: 1 MJ = 0.27778 kWh
-        # Using a simpler approach: radiation in Wh/m² * area factor
-        if rad is not None and rad > 0:
-            # Typical panel output calculation
-            # kWh = (radiation_MJ * 1000 / 3.6) * (system_kwp / 1000) * PR
-            # Simplified: radiation (MJ) * 277.78 * 5 * 0.75 / 1000
-            kwh_estimate = (rad / 3.6) * (system_kwp / 1000) * performance_ratio
-            # Apply temperature correction (panels less efficient in heat)
-            temp_max = daily.get("temperature_2m_max", [30])[i] if daily.get("temperature_2m_max") else 30
-            temp_correction = 1 - 0.004 * max(0, temp_max - 25)  # -0.4% per degree above 25C
-            kwh_estimate *= temp_correction
-        else:
-            kwh_estimate = 0
+    # Calculate hourly power and aggregate to daily
+    hourly_df = pd.DataFrame({
+        "datetime": pd.to_datetime(times),
+        "date": pd.to_datetime(times).dt.date,
+        "ghi": ghi,
+        "temperature": temperature,
+    })
 
-        results.append({
-            "date": pd.to_datetime(time),
-            "date_str": pd.to_datetime(time).strftime("%a %b %d"),
-            "forecast_kwh": max(0, round(kwh_estimate, 1)),
-            "radiation_mj": rad,
-            "direct_radiation": direct
-        })
+    # Calculate DC power for each hour
+    # GHI is in W/m², so (GHI / 1000) gives kW/m²
+    # dc_power (kW) = capacity_kw * (ghi / 1000) * (1 + temp_coeff * (temp - 25))
+    hourly_df["dc_power"] = capacity_kw * (hourly_df["ghi"] / 1000) * (
+        1 + temp_coefficient * (hourly_df["temperature"] - 25)
+    )
+    # AC power = DC power * performance ratio
+    hourly_df["ac_power"] = hourly_df["dc_power"] * performance_ratio
+    # kWh for this hour = AC power (kW) * 1 hour
+    hourly_df["kwh"] = hourly_df["ac_power"].clip(lower=0)
 
-    return pd.DataFrame(results)
+    # Group by date and sum kWh
+    daily_df = hourly_df.groupby("date")["kwh"].sum().reset_index()
+    daily_df["date"] = pd.to_datetime(daily_df["date"])
+    daily_df["date_str"] = daily_df["date"].dt.strftime("%a %b %d")
+    daily_df["forecast_kwh"] = daily_df["kwh"].round(1)
+
+    return daily_df[["date", "date_str", "forecast_kwh"]]
 
 # ------------------------------------------------------------------
 # Page config
@@ -611,9 +637,6 @@ with chart_col:
     </div>
     """, unsafe_allow_html=True)
 
-    # Debug: show current date
-    st.caption(f"Debug: Today is {datetime.now().strftime('%Y-%m-%d')}")
-
     # Fetch live forecast
     forecast_data = fetch_forecast()
 
@@ -629,8 +652,6 @@ with chart_col:
         # Use typical Singapore solar production values as estimates
         # 5MW system with ~75% capacity factor, adjusted for seasonal weather
         synthetic_kwh = [18500, 19200, 17800, 19500, 18800, 16500, 17200]  # kWh estimates
-
-        st.caption(f"Debug: Using synthetic future dates: {future_date_strs}")
 
         fig_trend = go.Figure()
         fig_trend.add_trace(go.Bar(
@@ -668,8 +689,6 @@ with chart_col:
             future_date_strs = [(today + timedelta(days=i)).strftime("%a %b %d") for i in range(7)]
             synthetic_kwh = [18500, 19200, 17800, 19500, 18800, 16500, 17200]
 
-            st.caption(f"Debug: Using synthetic future dates: {future_date_strs}")
-
             fig_trend = go.Figure()
             fig_trend.add_trace(go.Bar(
                 x=future_date_strs,
@@ -694,9 +713,6 @@ with chart_col:
             today_forecast_kwh = synthetic_kwh[0]
             forecast_co2_offset = total_forecast_kwh * CO2_FACTOR_KG_PER_KWH
         else:
-            # Debug: print the dates from the forecast
-            st.caption(f"Debug: Forecast dates from Open-Meteo: {forecast_df['date_str'].tolist()}")
-
             forecast_avg = forecast_df["forecast_kwh"].mean()
 
             fig_trend = go.Figure()
