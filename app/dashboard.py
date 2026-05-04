@@ -133,9 +133,10 @@ def run_forecast(forecast_data):
     temp_coefficient = -0.004  # -0.4% per degree above 25°C
 
     # Calculate hourly power and aggregate to daily
+    times_dt = pd.to_datetime(times)
     hourly_df = pd.DataFrame({
-        "datetime": pd.to_datetime(times),
-        "date": pd.to_datetime(times).dt.date,
+        "datetime": times_dt,
+        "date": times_dt.date,
         "ghi": ghi,
         "temperature": temperature,
     })
