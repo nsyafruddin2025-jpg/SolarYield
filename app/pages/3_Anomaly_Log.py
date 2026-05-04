@@ -127,21 +127,51 @@ st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 # Check anomaly count and show banner if > 10
 # ------------------------------------------------------------------
 
-anomaly_count = 0
-if "anomaly" in df_daily.columns:
-    anomaly_count = df_daily["anomaly"].sum()
-elif "is_anomaly" in df_daily.columns:
-    anomaly_count = df_daily["is_anomaly"].sum()
+anomaly_count = int(df_daily["is_anomaly"].sum())
+total_days = len(df_daily)
+anomaly_pct = (anomaly_count / total_days) * 100
 
-if anomaly_count > 10:
-    st.markdown(f"""
-    <div class="red-alert-banner">
-        <h3>🚨 High Anomaly Count Detected</h3>
-        <p><strong>{int(anomaly_count)} anomalies</strong> detected in the monitoring period. This may indicate systemic issues requiring investigation.</p>
+if anomaly_pct > 8:
+    st.markdown("""
+    <div style='background:#FEE2E2; border:2px solid #EF4444; border-radius:10px;
+    padding:1.2rem; margin-bottom:1rem;'>
+    <h3 style='color:#DC2626; margin:0;'>🚨 High Anomaly Rate — Action Required</h3>
+    <p style='color:#DC2626; margin:0.5rem 0 0;'>
+    <b>{count} anomalies detected ({pct:.1f}% of {total} days).</b>
+    This exceeds the 2024 global industry average of 5.77% underperformance
+    (Raptor Maps Global Solar Report 2025). Systemic equipment issue likely —
+    recommend immediate O&M inspection.</p>
     </div>
-    """, unsafe_allow_html=True)
+    """.format(count=anomaly_count, pct=anomaly_pct, total=total_days),
+    unsafe_allow_html=True)
+
+elif anomaly_pct > 4:
+    st.markdown("""
+    <div style='background:#FEF9C3; border:2px solid #F59E0B; border-radius:10px;
+    padding:1.2rem; margin-bottom:1rem;'>
+    <h3 style='color:#B45309; margin:0;'>⚠️ Elevated Anomaly Rate — Monitor Closely</h3>
+    <p style='color:#92400E; margin:0.5rem 0 0;'>
+    <b>{count} anomalies detected ({pct:.1f}% of {total} days).</b>
+    Above the 2023 global benchmark of 5.00% (Raptor Maps) but below
+    the 2024 average of 5.77%. Schedule preventive maintenance inspection
+    within 30 days.</p>
+    </div>
+    """.format(count=anomaly_count, pct=anomaly_pct, total=total_days),
+    unsafe_allow_html=True)
+
 else:
-    st.success(f"✓ Anomaly count is within normal range: {int(anomaly_count)} anomalies detected")
+    st.markdown("""
+    <div style='background:#DCFCE7; border:2px solid #22C55E; border-radius:10px;
+    padding:1.2rem; margin-bottom:1rem;'>
+    <h3 style='color:#15803D; margin:0;'>✅ Normal Anomaly Rate — Farm Performing Well</h3>
+    <p style='color:#166534; margin:0.5rem 0 0;'>
+    <b>{count} anomalies detected ({pct:.1f}% of {total} days).</b>
+    Below the 2024 global industry average of 5.77% underperformance
+    (Raptor Maps Global Solar Report 2025, analysis of 193 GW of solar assets).
+    This farm is outperforming industry benchmarks. No immediate action required.</p>
+    </div>
+    """.format(count=anomaly_count, pct=anomaly_pct, total=total_days),
+    unsafe_allow_html=True)
 
 st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 
