@@ -1,0 +1,29 @@
+name: Daily Solar Data Refresh
+
+on:
+  schedule:
+    - cron: "0 16 * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install pandas numpy pvlib requests python-dotenv tenacity scikit-learn joblib
+      - name: Run data pipeline
+        run: python solar_pipeline.py
+      - name: Run preprocessing
+        run: python src/ml/preprocess.py
+      - name: Commit updated data
+        run: |
+          git config --global user.email "github-actions@solaryield.io"
+          git config --global user.name "SolarYield MLOps Bot"
+          git add solar_yield_output.csv data/enriched_daily.csv
+          git diff --staged --quiet || git commit -m "MLOps: Auto-refresh solar data $(date +%Y-%m-%d)"
+          git push
