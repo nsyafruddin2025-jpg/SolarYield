@@ -1,19 +1,25 @@
 # SolarYield — COC Decision Log
+
 ## MGMT 655 Machine Learning for Decision Making
+
 ## SMU Lee Kong Chian School of Business | AY 2024/2025
+
 ## Team Project | Confidential
 
 ---
 
 ## What This Log Captures
+
 This log documents every major decision made during the SolarYield build — what we chose, what we rejected, and why. It covers data strategy, model selection, feature engineering, architecture, UI design, and business model decisions. Judges assess the quality of our thinking, not the quantity of our code.
 
 ---
 
 ## Decision 1: Problem Framing
+
 **Date:** Week 1
 **Decision:** Frame SolarYield as a yield prediction and anomaly detection platform for solar farm operators, not a generic energy analytics tool.
 **Options considered:**
+
 - Generic energy dashboard (rejected — no specific customer, no clear pain)
 - Battery arbitrage optimizer (rejected — requires real-time grid API access not available in MVP timeframe)
 - Solar yield prediction with anomaly detection (chosen)
@@ -25,9 +31,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 2: Data Source Strategy
+
 **Date:** Week 1
 **Decision:** Use Open-Meteo API for weather data and PVLib for synthetic yield label generation.
 **Options considered:**
+
 - Wait for real inverter logs from actual farms (rejected — no customer access at MVP stage, 6+ month delay)
 - Purchase commercial weather data (rejected — exceeds USD 50K budget)
 - Open-Meteo + PVLib synthetic labels (chosen)
@@ -42,9 +50,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 3: ML Model Selection
+
 **Date:** Week 2
 **Decision:** Use GradientBoostingRegressor (scikit-learn) as primary model, with RandomForestRegressor as baseline comparison.
 **Options considered:**
+
 - Linear Regression (rejected — cannot capture non-linear temperature-efficiency relationship)
 - XGBoost (considered — equivalent performance, rejected due to OpenMP dependency conflict on our Mac M-series development environment)
 - GradientBoostingRegressor / sklearn (chosen — identical algorithm to XGBoost, no dependency issues, trains in under 2 minutes)
@@ -54,6 +64,7 @@ This log documents every major decision made during the SolarYield build — wha
 **Rationale:** Gradient boosting captures the non-linear relationship between solar irradiance, temperature, cloud cover, and energy output. The temperature coefficient of crystalline silicon panels (-0.4%/°C above 25°C) is a non-linear interaction effect that linear models cannot learn. Tree-based ensembles handle this natively.
 
 **Validation results:**
+
 - GradientBoosting: MAPE 6.1%, R² 0.9915, RMSE 41.51 kWh
 - RandomForest baseline: MAPE 7.8%, R² 0.981
 - GBR outperforms RF by 1.7% MAPE — confirms model choice is correct
@@ -66,9 +77,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 4: Feature Engineering
+
 **Date:** Week 2
 **Decision:** Use 15 features: GHI, direct_radiation, diffuse_radiation, temperature, cloud_cover, humidity, wind_speed, hour_of_day, day_of_year, panel_capacity_kw, panel_tilt, hour_sin, hour_cos, day_sin, day_cos.
 **Options considered:**
+
 - Raw hour_of_day as integer (rejected — model treats 23 and 0 as far apart when they are adjacent)
 - Cyclical encoding of hour and day_of_year (chosen — preserves circular continuity)
 - Adding precipitation data (rejected — collinear with cloud_cover, adds noise)
@@ -82,9 +95,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 5: Train/Test Split Strategy
+
 **Date:** Week 2
 **Decision:** Time-based 80/20 split (train on first 80% of dates, test on last 20%).
 **Options considered:**
+
 - Random split (rejected — would allow future data to leak into training, artificially inflate metrics)
 - Time-based split (chosen — simulates real deployment where model predicts future data it has never seen)
 - Walk-forward cross-validation (considered — more rigorous, rejected for MVP due to training time, planned for Phase 2)
@@ -94,9 +109,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 6: Explainability Approach
+
 **Date:** Week 3
 **Decision:** Use SHAP (SHapley Additive exPlanations) for model explainability, surfaced in the dashboard UI.
 **Options considered:**
+
 - Feature importance from tree (rejected — does not show direction of effect, less interpretable)
 - LIME (rejected — slower, less stable for tree models)
 - SHAP TreeExplainer (chosen — fast, exact for tree models, produces beeswarm and per-prediction values)
@@ -109,9 +126,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 7: Dashboard Architecture
+
 **Date:** Week 3
 **Decision:** Build a Streamlit multi-page web app, not a React frontend or mobile app.
 **Options considered:**
+
 - Jupyter notebook (rejected — not a product, cannot be deployed, fails rubric requirement for working UI)
 - React + FastAPI (rejected — 3x longer build time, no advantage for MVP demo)
 - Streamlit single page (rejected — page becomes too long, hard to navigate)
@@ -123,9 +142,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 8: Anomaly Detection Method
+
 **Date:** Week 3
 **Decision:** Flag anomalies using rolling 30-day residual statistics (actual minus predicted > 2 standard deviations below rolling mean).
 **Options considered:**
+
 - Fixed threshold (rejected — does not adapt to seasonal variation in Singapore's irradiance)
 - Isolation Forest (considered — unsupervised ML approach, rejected for MVP because harder to explain to operators)
 - Rolling z-score on residual (chosen — adapts to seasonal baseline, interpretable, physically meaningful)
@@ -137,9 +158,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 9: UI Design System
+
 **Date:** Week 4
 **Decision:** Warm amber and navy color scheme with solar-themed visual language.
 **Options considered:**
+
 - Standard Streamlit default theme (rejected — generic, not investor-ready)
 - Dark mode dashboard (rejected — harder to read in bright conference rooms during demo)
 - Warm amber (#F4A836) + deep navy (#1E3A5F) + light yellow background (#FFF9E6) (chosen)
@@ -149,9 +172,11 @@ This log documents every major decision made during the SolarYield build — wha
 ---
 
 ## Decision 10: Business Model
+
 **Date:** Week 1 (confirmed Week 4)
 **Decision:** Three-tier SaaS pricing: Starter USD 99/month, Professional USD 499/month, Enterprise custom from USD 2,000/month.
 **Options considered:**
+
 - Usage-based pricing per API call (rejected — unpredictable revenue, harder to sell to operations managers)
 - One-time license (rejected — no recurring revenue, no data accumulation moat)
 - Performance share like the energy arbitrage model (rejected — requires verified savings measurement infrastructure not available at MVP)
@@ -161,19 +186,53 @@ This log documents every major decision made during the SolarYield build — wha
 
 ---
 
+## Decision 11: MLOps — Data Pipeline and Model Retraining Strategy
+
+**Date:** Week 4 (MLOps module)
+**Decision:** Implement automated daily data refresh via GitHub Actions and define monthly model retraining trigger.
+
+**Options considered:**
+
+- Manual refresh (rejected — operator cannot rely on manual process, introduces human error, not production-grade)
+- Real-time streaming pipeline (rejected — over-engineered for MVP, hourly Open-Meteo API updates are sufficient for day-ahead forecasting)
+- Daily automated refresh via GitHub Actions (chosen — runs at midnight SGT every day, fetches latest weather actuals, regenerates enriched_daily.csv, commits to GitHub, Streamlit Cloud auto-deploys)
+
+**Retraining trigger logic:**
+
+- Monthly retraining scheduled on the 1st of each month
+- Triggered early if rolling 30-day MAPE exceeds 10% (1.6x our validated benchmark)
+- Each retraining run: fetch latest 12 months of data, retrain GradientBoosting, compare MAPE on holdout set, deploy only if new model outperforms current model
+- Model version tracked in src/ml/model_metadata.json
+
+**Why this matters for the business:**
+As real customer inverter data accumulates, the model improves from the synthetic PVLib labels to site-specific actual data. A 5MW farm that has been uploading inverter logs for 12 months will have a model tuned to their exact panel configuration, microclimate, and degradation profile. This data accumulation is the competitive moat — new entrants cannot replicate 12 months of site-specific training data.
+
+**MLOps stack:**
+
+- Data pipeline: solar_pipeline.py + GitHub Actions (daily cron at 16:00 UTC)
+- Preprocessing: src/ml/preprocess.py (anomaly detection, feature engineering)
+- Model training: src/ml/train_models.py (GradientBoosting + Random Forest comparison)
+- Model registry: src/ml/model_metadata.json (version, metrics, date range)
+- Monitoring: Anomaly Log page (rolling 2-sigma deviation tracking)
+- Deployment: Streamlit Cloud (auto-deploys on GitHub push)
+
+**COC role:** COC implemented the GitHub Actions workflow. Team decided the retraining trigger threshold (10% MAPE), the monthly cadence, and the champion/challenger model comparison logic.
+
+---
+
 ## Summary: What the Team Decided vs What COC Built
 
-| Decision | Team | COC |
-|---|---|---|
-| Problem framing and target customer | Team | — |
-| Data source selection | Team | Scaffolded API calls |
-| Algorithm choice and baseline comparison | Team | Wrote training code |
-| Feature selection and cyclical encoding | Team | Implemented encoding |
-| Train/test split methodology | Team | Implemented split |
-| SHAP as explainability method | Team | Computed SHAP values |
-| Streamlit multi-page architecture | Team | Built all pages |
-| Anomaly detection threshold (2σ) | Team | Implemented rolling stats |
-| Color system and UI design | Team | Applied styling |
-| Pricing tiers and business model | Team | — |
+| Decision                                 | Team | COC                       |
+| ---------------------------------------- | ---- | ------------------------- |
+| Problem framing and target customer      | Team | —                         |
+| Data source selection                    | Team | Scaffolded API calls      |
+| Algorithm choice and baseline comparison | Team | Wrote training code       |
+| Feature selection and cyclical encoding  | Team | Implemented encoding      |
+| Train/test split methodology             | Team | Implemented split         |
+| SHAP as explainability method            | Team | Computed SHAP values      |
+| Streamlit multi-page architecture        | Team | Built all pages           |
+| Anomaly detection threshold (2σ)         | Team | Implemented rolling stats |
+| Color system and UI design               | Team | Applied styling           |
+| Pricing tiers and business model         | Team | —                         |
 
 COC handled all implementation complexity. The team made every decision that matters: what to build, why this model, what the threshold should be, how to present it to investors, and what the business case is.
