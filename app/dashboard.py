@@ -13,6 +13,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import requests
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 # ------------------------------------------------------------------
 # Simple session state login check
@@ -179,7 +180,7 @@ import os
 
 st.markdown("""
 <style>
-    /* SolarIQ Logo in sidebar */
+    /* SolarYield Logo in sidebar */
     .solar-logo {
         display: flex;
         align-items: center;
@@ -454,7 +455,7 @@ earliest_date = daily_df["date"].min()
 today = latest_date.date() if hasattr(latest_date, 'date') else latest_date
 
 # ------------------------------------------------------------------
-# Sidebar: SolarIQ Logo
+# Sidebar: SolarYield Logo
 # ------------------------------------------------------------------
 
 with st.sidebar:
@@ -504,13 +505,13 @@ st.markdown(f"""
     <div class="navbar-brand">
         <span style="font-size: 2rem;">☀️</span>
         <div>
-            <h1>SolarIQ Dashboard</h1>
+            <h1>SolarYield Dashboard</h1>
             <p class="subtitle">Singapore 5MW Solar Farm · Executive Summary</p>
         </div>
     </div>
     <div class="live-indicator">
         <span class="live-dot"></span>
-        LIVE · {datetime.now().strftime('%H:%M:%S')} SGT
+        LIVE · {datetime.now(ZoneInfo("Asia/Singapore")).strftime('%H:%M:%S')} SGT
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -532,7 +533,7 @@ with col_filter:
     """, unsafe_allow_html=True)
 
 with col_status:
-    st.markdown(f"<div style='text-align: right; color: #64748b; font-size: 0.85rem;'>Data through {today.strftime('%Y-%m-%d') if hasattr(today, 'strftime') else str(today)}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align: right; color: #64748b; font-size: 0.85rem;'>Live forecast · {datetime.now().strftime('%d %B %Y')}</div>", unsafe_allow_html=True)
 
 st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 
@@ -966,7 +967,7 @@ st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 # ------------------------------------------------------------------
 
 st.caption(
-    f"☀️ SolarIQ Dashboard · Singapore 5MW Solar Farm · "
-    f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} SGT · "
+    f"☀️ SolarYield Dashboard · Singapore 5MW Solar Farm · "
+    f"Last updated: {datetime.now(ZoneInfo('Asia/Singapore')).strftime('%Y-%m-%d %H:%M:%S')} SGT · "
     f"Model: GradientBoosting (MAPE 6.1%, R² 0.9915)"
 )
