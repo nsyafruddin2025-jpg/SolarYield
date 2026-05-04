@@ -222,8 +222,8 @@
             );
 
             if (isValid) {
-                // Redirect to dashboard
-                window.location.href = DASHBOARD_URL;
+                // Redirect to dashboard with login param
+                window.location.href = 'https://solaryield-gfdus3knta7y95aauta5mt.streamlit.app/?login=success';
             } else {
                 // Show error
                 errorMessage.style.display = 'block';
