@@ -117,9 +117,9 @@ st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 
 # Calculate key metrics
 total_days = len(df_daily)
-total_energy_mwh = df_daily["kWh"].sum() / 1000
-avg_daily_kwh = df_daily["kWh"].mean()
-capacity_factor = (df_daily["kWh"].sum() / 1000) / (SYSTEM_CAPACITY_MW * total_days * 24) * 100
+total_energy_mwh = df_daily["actual_kwh"].sum() / 1000
+avg_daily_kwh = df_daily["actual_kwh"].mean()
+capacity_factor = (df_daily["actual_kwh"].sum() / 1000) / (SYSTEM_CAPACITY_MW * total_days * 24) * 100
 
 # Get latest values
 latest_date = df_daily["date"].max()
@@ -177,7 +177,7 @@ st.markdown("<div class='section-header'>📈 Daily Energy Production</div>", un
 fig_daily = go.Figure()
 fig_daily.add_trace(go.Bar(
     x=df_daily["date"],
-    y=df_daily["kWh"],
+    y=df_daily["actual_kwh"],
     marker_color="#F4A836",
     name="Daily kWh"
 ))
@@ -201,7 +201,7 @@ st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 
 st.markdown("<div class='section-header'>⚡ Capacity Factor Trend</div>", unsafe_allow_html=True)
 
-df_daily["capacity_factor"] = (df_daily["kWh"] / (SYSTEM_CAPACITY_KW * 24)) * 100
+df_daily["capacity_factor"] = (df_daily["actual_kwh"] / (SYSTEM_CAPACITY_KW * 24)) * 100
 
 fig_cf = go.Figure()
 fig_cf.add_trace(go.Scatter(
@@ -237,7 +237,7 @@ if "GHI" in df_daily.columns:
     fig_corr = px.scatter(
         df_daily,
         x="GHI",
-        y="kWh",
+        y="actual_kwh",
         trendline="ols",
         color_discrete_sequence=["#F4A836"]
     )
@@ -265,10 +265,10 @@ st.markdown("<div class='section-header'>📅 Monthly Energy Summary</div>", uns
 
 df_daily["month"] = df_daily["date"].dt.to_period("M")
 monthly = df_daily.groupby("month").agg(
-    total_kwh=("kWh", "sum"),
-    avg_kwh=("kWh", "mean"),
-    max_kwh=("kWh", "max"),
-    days=("kWh", "count")
+    total_kwh=("actual_kwh", "sum"),
+    avg_kwh=("actual_kwh", "mean"),
+    max_kwh=("actual_kwh", "max"),
+    days=("actual_kwh", "count")
 ).reset_index()
 monthly["month"] = monthly["month"].astype(str)
 

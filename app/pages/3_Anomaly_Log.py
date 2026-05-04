@@ -186,14 +186,14 @@ if len(df_anomalies) > 0:
     fig_anomaly = go.Figure()
     fig_anomaly.add_trace(go.Scatter(
         x=df_daily["date"],
-        y=df_daily["kWh"],
+        y=df_daily["actual_kwh"],
         mode="lines",
         line=dict(color="#F4A836", width=2),
         name="Daily kWh"
     ))
     fig_anomaly.add_trace(go.Scatter(
         x=df_anomalies["date"],
-        y=df_anomalies["kWh"],
+        y=df_anomalies["actual_kwh"],
         mode="markers",
         marker=dict(color="#EF4444", size=12, symbol="x"),
         name="Anomaly"
@@ -222,7 +222,7 @@ st.markdown("<div class='section-header'>📋 Anomaly Details</div>", unsafe_all
 
 if len(df_anomalies) > 0:
     # Prepare anomaly details
-    df_anomaly_detail = df_anomalies[["date", "kWh", "GHI", "temp_cell"]].copy() if all(c in df_anomalies.columns for c in ["date", "kWh", "GHI", "temp_cell"]) else df_anomalies[["date", "kWh"]].copy()
+    df_anomaly_detail = df_anomalies[["date", "actual_kwh", "max_ghi", "mean_temp"]].copy() if all(c in df_anomalies.columns for c in ["date", "actual_kwh", "max_ghi", "mean_temp"]) else df_anomalies[["date", "actual_kwh"]].copy()
     df_anomaly_detail["date"] = df_anomaly_detail["date"].dt.strftime("%Y-%m-%d")
     df_anomaly_detail.columns = ["Date", "kWh", "GHI (W/m²)", "Cell Temp (°C)"] if len(df_anomaly_detail.columns) == 3 else ["Date", "kWh"]
 
@@ -264,19 +264,19 @@ with col2:
     st.metric("Anomaly Rate", f"{anomaly_rate:.1f}%")
 
 with col3:
-    if len(df_anomalies) > 0 and "kWh" in df_anomalies.columns:
-        avg_kwh_anomaly = df_anomalies["kWh"].mean()
+    if len(df_anomalies) > 0 and "actual_kwh" in df_anomalies.columns:
+        avg_kwh_anomaly = df_anomalies["actual_kwh"].mean()
         st.metric("Avg kWh on Anomaly Days", f"{avg_kwh_anomaly:.0f}")
 
 with col4:
     if len(df_anomalies) > 0:
-        avg_kwh_normal = df_daily[df_daily[anomaly_col] == 0]["kWh"].mean() if anomaly_col in df_daily.columns else 0
+        avg_kwh_normal = df_daily[df_daily[anomaly_col] == 0]["actual_kwh"].mean() if anomaly_col in df_daily.columns else 0
         st.metric("Avg kWh on Normal Days", f"{avg_kwh_normal:.0f}")
     else:
         st.metric("Avg kWh on Normal Days", "N/A")
 
 # Show normal days average for comparison
-if len(df_anomalies) > 0 and "kWh" in df_anomalies.columns:
+if len(df_anomalies) > 0 and "actual_kwh" in df_anomalies.columns:
     normal_days = df_daily[df_daily[anomaly_col] == 0]
     if len(normal_days) > 0:
         st.markdown(f"""

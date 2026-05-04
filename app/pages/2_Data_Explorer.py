@@ -127,9 +127,9 @@ df_hourly["hour"] = df_hourly["timestamp"].dt.hour
 
 # Aggregate by hour across all days
 hourly_pattern = df_hourly.groupby("hour").agg(
-    avg_kwh=("kWh", "mean"),
+    avg_kwh=("kWh_output", "mean"),
     avg_ghi=("GHI", "mean") if "GHI" in df_hourly.columns else ("ghi", "mean"),
-    count=("kWh", "count")
+    count=("kWh_output", "count")
 ).reset_index()
 
 fig_hourly = go.Figure()
@@ -174,8 +174,8 @@ df_hourly["month"] = df_hourly["timestamp"].dt.month
 df_hourly["day"] = df_hourly["timestamp"].dt.day
 
 # Aggregate by month and hour
-daily_heatmap = df_hourly.groupby(["month", "hour"])["kWh"].mean().reset_index()
-pivot_data = daily_heatmap.pivot(index="month", columns="hour", values="kWh")
+daily_heatmap = df_hourly.groupby(["month", "hour"])["kWh_output"].mean().reset_index()
+pivot_data = daily_heatmap.pivot(index="month", columns="hour", values="kWh_output")
 
 fig_heatmap = px.imshow(
     pivot_data,
@@ -206,7 +206,7 @@ week_data = df_hourly[df_hourly["timestamp"] >= last_date - pd.Timedelta(days=7)
 week_data["timestamp"] = week_data["timestamp"].dt.strftime("%Y-%m-%d %H:%M")
 
 # Select key columns for display
-display_cols = ["timestamp", "kWh", "GHI", "temp_cell", "humidity"] if all(c in week_data.columns for c in ["kWh", "GHI", "temp_cell", "humidity"]) else ["timestamp", "kWh"]
+display_cols = ["timestamp", "kWh_output", "GHI", "temp_cell", "humidity"] if all(c in week_data.columns for c in ["kWh_output", "GHI", "temp_cell", "humidity"]) else ["timestamp", "kWh_output"]
 week_display = week_data[display_cols].head(50)
 
 st.dataframe(
