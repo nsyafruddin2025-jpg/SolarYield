@@ -234,6 +234,9 @@ if "multi_site_extra_rows" not in st.session_state:
 # Pre-compute active site name for subheader (set properly in Section 4)
 _active_site_name = st.session_state.get("active_site_name", "Solar Farm")
 
+# site_name is captured from the text input in Section 1; safe fallback
+_site_name_fallback = st.session_state.get("site_name", "Solar Farm")
+
 # ------------------------------------------------------------------
 # SECTION 1: Farm Identity
 # ------------------------------------------------------------------
@@ -434,34 +437,11 @@ st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 # SECTION 4: Multi-Site Management
 # ------------------------------------------------------------------
 
-# --- Selection state: sync Farm Identity when user checks a row ---
-if "selected_row" not in st.session_state:
-    st.session_state.selected_row = 0  # row 0 = primary site selected by default
-
-# If user changed selection, update Farm Identity from that row
-if st.session_state.selected_row is not None and st.session_state.selected_row > 0:
-    sel_idx = st.session_state.selected_row
-    sel_df = st.session_state.get("sites_df")
-    sel_extra = st.session_state.multi_site_extra_rows
-    if sel_df is not None:
-        all_rows = [{"Site Name": _display_name, "Capacity (kWp)": capacity_kw, "Age (years)": panel_age}] + \
-                   sel_df.to_dict("records")
-        if sel_extra:
-            all_rows += sel_extra
-        if sel_idx < len(all_rows):
-            row = all_rows[sel_idx]
-            matched = next((c for c in CITIES if c.lower() in str(row.get("Site Name", "")).lower()), None)
-            if matched and matched != st.session_state.selected_city:
-                st.session_state.selected_city = matched
-                st.session_state.lat_input = CITIES[matched]["lat"]
-                st.session_state.lon_input = CITIES[matched]["lon"]
-            site_name = str(row.get("Site Name", "Solar Farm"))
-            st.session_state.active_site_name = site_name
-else:
-    st.session_state.active_site_name = _display_name
-
-
 st.markdown("<div class='section-header'>🌐 Multi-Site Management</div>", unsafe_allow_html=True)
+
+# --- site_name: use widget value if available, else session state fallback ---
+# (widget value persists via Streamlit session; session_state is the fallback)
+_current_site_name = site_name if 'site_name' in dir() else st.session_state.get("site_name", "Solar Farm")
 
 # --- Build sites_df: static base rows (Jakarta, Manila) stored in session ---
 if "sites_df" not in st.session_state:
@@ -477,8 +457,38 @@ if "sites_df" not in st.session_state:
         "Status":          ["Standby", "Standby"],
     })
 
-# Safely default site_name to prevent blank cells
-_display_name = site_name.strip() if site_name and site_name.strip() else "Solar Farm"
+# --- Selection state ---
+if "selected_row" not in st.session_state:
+    st.session_state.selected_row = 0
+
+# --- Selection sync: if user checked a non-primary row, update Farm Identity ---
+if st.session_state.selected_row is not None and st.session_state.selected_row > 0:
+    sel_idx = st.session_state.selected_row
+    sel_df = st.session_state.get("sites_df")
+    sel_extra = st.session_state.multi_site_extra_rows
+    if sel_df is not None:
+        all_rows = (
+            [{"Site Name": _current_site_name, "Capacity (kWp)": capacity_kw, "Age (years)": panel_age}]
+            + sel_df.to_dict("records")
+            + (sel_extra or [])
+        )
+        if sel_idx < len(all_rows):
+            row = all_rows[sel_idx]
+            matched = next(
+                (c for c in CITIES if c.lower() in str(row.get("Site Name", "")).lower()),
+                None,
+            )
+            if matched and matched != st.session_state.selected_city:
+                st.session_state.selected_city = matched
+                st.session_state.lat_input = CITIES[matched]["lat"]
+                st.session_state.lon_input = CITIES[matched]["lon"]
+            _current_site_name = str(row.get("Site Name", "Solar Farm"))
+            st.session_state.active_site_name = _current_site_name
+else:
+    st.session_state.active_site_name = _current_site_name
+
+# --- Safe _display_name (computed AFTER any site_name reassignment) ---
+_display_name = _current_site_name.strip() if _current_site_name and _current_site_name.strip() else "Solar Farm"
 
 # --- Build display_df: Row 0 synced from Farm Identity + user-added rows ---
 primary_row = pd.DataFrame([{
