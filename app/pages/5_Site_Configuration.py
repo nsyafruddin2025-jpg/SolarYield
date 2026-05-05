@@ -224,16 +224,15 @@ if "lat_input" not in st.session_state:
 if "lon_input" not in st.session_state:
     st.session_state.lon_input = CITIES["Singapore"]["lon"]
 
-# Initialize multi-site table data (done once; synced to Farm Identity every run)
-if "multi_site_df" not in st.session_state:
-    st.session_state.multi_site_df = pd.DataFrame({
-        "Site Name":       pd.Series(["Singapore HQ", "Jakarta Plant", "Manila Farm"], dtype="string"),
-        "Location":        pd.Series(["1.3521°, 103.8198°", "-6.2088°, 106.8456°", "14.5995°, 120.9842°"], dtype="string"),
-        "Capacity (kWp)":  pd.Series([5000, 3000, 8000], dtype="Int64"),
-        "Age (years)":     pd.Series([0, 2, 1], dtype="Int64"),
-        "Est. Daily MWh":  pd.Series(["4.68", "2.59", "7.06"], dtype="string"),
-        "Status":          pd.Series(["Active", "Standby", "Standby"], dtype="string"),
-    })
+# ------------------------------------------------------------------
+# Multi-site base data — initialized once; user-added rows persist in
+# session_state.multi_site_extra_rows (list of dicts, rebuilt below)
+# ------------------------------------------------------------------
+if "multi_site_extra_rows" not in st.session_state:
+    st.session_state.multi_site_extra_rows = []
+
+# Safely default site_name so row 0 never shows blank
+_site_name_input = site_name if site_name and site_name.strip() else "Solar Farm"
 
 # ------------------------------------------------------------------
 # SECTION 1: Farm Identity
@@ -434,16 +433,26 @@ st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 
 st.markdown("<div class='section-header'>🌐 Multi-Site Management</div>", unsafe_allow_html=True)
 
-# Get any user-added rows from prior sessions
-prior_df = st.session_state.get("multi_site_df")
-if prior_df is not None and len(prior_df) > 3:
-    user_added = prior_df.iloc[3:].copy().reset_index(drop=True)
-else:
-    user_added = pd.DataFrame()
+# --- Build sites_df: static base rows (Jakarta, Manila) stored in session ---
+if "sites_df" not in st.session_state:
+    st.session_state.sites_df = pd.DataFrame({
+        "Site Name":       ["Jakarta Plant", "Manila Farm"],
+        "Location":        ["-6.2088°, 106.8456°", "14.5995°, 120.9842°"],
+        "Capacity (kWp)": [3000, 8000],
+        "Age (years)":     [2, 1],
+        "Est. Daily MWh":  [
+            f"{3000 * 0.18 * 0.99 * CITIES['Jakarta']['peak_sun_hours'] / 1000:.2f}",
+            f"{8000 * 0.18 * 0.995 * CITIES['Manila']['peak_sun_hours'] / 1000:.2f}",
+        ],
+        "Status":          ["Standby", "Standby"],
+    })
 
-# Build row 0 from live Farm Identity
+# Safely default site_name to prevent blank cells
+_display_name = site_name.strip() if site_name and site_name.strip() else "Solar Farm"
+
+# --- Build display_df: Row 0 synced from Farm Identity + user-added rows ---
 primary_row = pd.DataFrame([{
-    "Site Name":       site_name,
+    "Site Name":       _display_name,
     "Location":        f"{lat:.4f}°, {lon:.4f}°",
     "Capacity (kWp)":  capacity_kw,
     "Age (years)":     panel_age,
@@ -451,77 +460,66 @@ primary_row = pd.DataFrame([{
     "Status":          "Active",
 }])
 
-# Build full table: row 0 + user-added rows
-if not user_added.empty:
-    display_df = pd.concat([primary_row, user_added], ignore_index=True)
+# Restore user-added rows from prior session
+user_added_rows = st.session_state.multi_site_extra_rows
+if user_added_rows:
+    user_df = pd.DataFrame(user_added_rows)
 else:
-    display_df = primary_row.copy()
+    user_df = pd.DataFrame(columns=st.session_state.sites_df.columns)
 
-# Column display config
+display_df = pd.concat([primary_row, st.session_state.sites_df, user_df], ignore_index=True)
+
+# --- Column config ---
 col_config = {
     "Site Name": st.column_config.TextColumn(
         "Site Name",
-        help="★ Row 0 is auto-synced from Farm Identity",
+        help="★ Row 0 (Primary Site) is auto-synced from Farm Identity above",
         width="medium",
     ),
     "Location": st.column_config.TextColumn(
         "Location",
-        help="★ Row 0 is auto-synced from Farm Identity",
+        help="★ Row 0 is auto-synced from Farm Identity above",
         width="medium",
     ),
     "Capacity (kWp)": st.column_config.NumberColumn(
-        "Capacity (kWp)",
-        min_value=0,
-        max_value=500000,
-        format="%,.0f",
-        width="small",
+        "Capacity (kWp)", min_value=0, max_value=500000, format="%,.0f", width="small",
     ),
     "Age (years)": st.column_config.NumberColumn(
-        "Age (years)",
-        min_value=0,
-        max_value=50,
-        format="%d",
-        width="small",
+        "Age (years)", min_value=0, max_value=50, format="%d", width="small",
     ),
-    "Est. Daily MWh": st.column_config.TextColumn(
-        "Est. Daily MWh",
-        width="small",
-    ),
+    "Est. Daily MWh": st.column_config.TextColumn("Est. Daily MWh", width="small"),
     "Status": st.column_config.SelectboxColumn(
-        "Status",
-        options=["Active", "Standby", "Decommissioned"],
-        width="small",
+        "Status", options=["Active", "Standby", "Decommissioned"], width="small",
     ),
 }
 
-st.data_editor(
+# --- Render data_editor ---
+result = st.data_editor(
     display_df,
     column_config=col_config,
     use_container_width=True,
     hide_index=False,
     num_rows="dynamic",
-    key="multi_site_editor",
+    key="main_site_editor",
 )
 
-# Capture user's edited dataframe; re-apply Farm Identity to row 0 before saving
-# safe to read: only exists after data_editor has been mounted once
-edited_df = st.session_state.get("multi_site_editor", display_df.copy())
-
-# Restore row 0 from live Farm Identity (user cannot overwrite row 0)
-edited_df.at[0, "Site Name"]       = site_name
-edited_df.at[0, "Location"]        = f"{lat:.4f}°, {lon:.4f}°"
-edited_df.at[0, "Capacity (kWp)"]  = capacity_kw
-edited_df.at[0, "Age (years)"]      = panel_age
-edited_df.at[0, "Est. Daily MWh"]  = f"{y['daily_mwh']:.2f}"
-edited_df.at[0, "Status"]           = "Active"
-
-st.session_state.multi_site_df = edited_df
+# --- Capture edits: rebuild extra rows (rows 3+) and persist ---
+total_static = 1 + len(st.session_state.sites_df)  # 1 primary + N base rows
+if len(result) > total_static:
+    extra = result.iloc[total_static:].copy()
+    extra.loc[:, "Capacity (kWp)"] = extra["Capacity (kWp)"].astype(int)
+    extra.loc[:, "Age (years)"] = extra["Age (years)"].astype(int)
+    st.session_state.multi_site_extra_rows = extra.to_dict("records")
+else:
+    st.session_state.multi_site_extra_rows = []
 
 st.markdown(
-    "<div class='info-note'>💡 Row 0 (★ Primary Site) is always synced from Farm Identity above. "
-    "Rows 1+ are editable. Use + to add new sites.</div>",
+    "<div class='info-note'>💡 Row 0 (★ Primary Site) syncs from Farm Identity above — "
+    "edits to row 0 are not saved. Rows 1+ are fully editable. Use + to add sites.</div>",
     unsafe_allow_html=True
 )
+
+st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 
 st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 
