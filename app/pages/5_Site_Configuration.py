@@ -285,14 +285,15 @@ with st.form("site_config_form"):
 
     st.markdown("<div class='section-header'>🌐 Multi-Site Management</div>", unsafe_allow_html=True)
 
-    # Pre-configured demo sites
+    # Pre-configured demo sites — Singapore HQ derives from slider
+    singapore_daily_mwh = capacity_kw * 0.000936
     demo_sites = [
         {
             "Site Name": "Singapore HQ",
             "Location": "1.3521°N, 103.8198°E",
-            "Capacity (kWp)": 5000,
-            "Age (years)": 0,
-            "Est. Daily MWh": f"{(5000 * 0.18 * 1.0 * PEAK_SUN_HOURS / 1000):.2f}",
+            "Capacity (kWp)": capacity_kw,
+            "Age (years)": panel_age,
+            "Est. Daily MWh": f"{singapore_daily_mwh:.2f}",
             "Status": '<span class="status-active">Active</span>'
         },
         {
