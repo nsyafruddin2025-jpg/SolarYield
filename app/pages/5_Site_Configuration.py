@@ -231,9 +231,6 @@ if "lon_input" not in st.session_state:
 if "multi_site_extra_rows" not in st.session_state:
     st.session_state.multi_site_extra_rows = []
 
-# Safely default site_name so row 0 never shows blank
-_site_name_input = site_name if site_name and site_name.strip() else "Solar Farm"
-
 # ------------------------------------------------------------------
 # SECTION 1: Farm Identity
 # ------------------------------------------------------------------
