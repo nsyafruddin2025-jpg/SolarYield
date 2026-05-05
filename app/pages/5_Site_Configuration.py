@@ -298,6 +298,7 @@ capacity_kw = st.slider(
     max_value=50000,
     value=5000,
     step=100,
+    key="capacity_kw",
     help="Total installed capacity in kilowatts-peak (kWp)"
 )
 
@@ -310,6 +311,7 @@ with col1:
         max_value=45,
         value=20,
         step=1,
+        key="panel_tilt",
         help="Angle from horizontal (0° = flat, 90° = vertical)"
     )
 
@@ -318,6 +320,7 @@ with col2:
         "Panel Azimuth",
         options=["South (180°)", "Southwest (225°)", "Southeast (135°)"],
         index=0,
+        key="panel_azimuth",
         help="compass direction panels face"
     )
 
@@ -328,6 +331,7 @@ with col3:
         max_value=25,
         value=0,
         step=1,
+        key="panel_age",
         help="Years since installation"
     )
 
@@ -393,10 +397,10 @@ st.markdown(f"""
     </div>
     <div style="margin-top:1rem; font-size:0.85rem; color:#555;">
         <strong>Loss Breakdown:</strong>
-        Tilt −{tilt_pct:.1f}% &nbsp;|&nbsp;
-        Azimuth −{az_pct:.1f}% &nbsp;|&nbsp;
-        Age −{age_pct:.1f}% &nbsp;|&nbsp;
-        <strong>Total −{total_loss:.1f}%</strong>
+        Tilt: -{tilt_pct:.1f}% &nbsp;|&nbsp;
+        Azimuth: -{az_pct:.1f}% &nbsp;|&nbsp;
+        Age: -{age_pct:.1f}% &nbsp;|&nbsp;
+        <strong>Total: -{total_loss:.1f}%</strong>
         &nbsp;&nbsp;|&nbsp;&nbsp;
         <strong>Eff:</strong> {y["efficiency_factor"]*100:.1f}%
     </div>
