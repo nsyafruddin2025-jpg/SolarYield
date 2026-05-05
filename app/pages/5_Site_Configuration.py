@@ -12,7 +12,81 @@ PAGE_TITLE = "Site Configuration — SolarYield"
 PAGE_ICON = "⚙️"
 
 ELECTRICITY_RATE_USD = 0.08
-PEAK_SUN_HOURS = 5.2  # Singapore average
+
+# City database with irradiance-derived peak sun hours
+CITIES = {
+    "Singapore":    {"lat": 1.3521,  "lon": 103.8198, "peak_sun_hours": 5.2},
+    "Jakarta":       {"lat": -6.2088, "lon": 106.8456, "peak_sun_hours": 4.8},
+    "Manila":        {"lat": 14.5995, "lon": 120.9842, "peak_sun_hours": 5.0},
+    "Bangkok":       {"lat": 13.7563, "lon": 100.5018, "peak_sun_hours": 4.9},
+    "Kuala Lumpur":  {"lat": 3.1390,  "lon": 101.6869, "peak_sun_hours": 5.1},
+    "Hanoi":         {"lat": 21.0285, "lon": 105.8542, "peak_sun_hours": 4.5},
+    "Ho Chi Minh":   {"lat": 10.8231, "lon": 106.6297, "peak_sun_hours": 4.7},
+    "Sydney":        {"lat": -33.8688,"lon": 151.2093, "peak_sun_hours": 5.5},
+    "Melbourne":     {"lat": -37.8136,"lon": 144.9631, "peak_sun_hours": 4.8},
+    "Brisbane":      {"lat": -27.4698,"lon": 153.0251, "peak_sun_hours": 5.7},
+    "Perth":         {"lat": -31.9505,"lon": 115.8605, "peak_sun_hours": 6.0},
+    "London":        {"lat": 51.5074,  "lon": -0.1278,  "peak_sun_hours": 2.9},
+    "Manchester":    {"lat": 53.4808,  "lon": -2.2426,  "peak_sun_hours": 2.7},
+    "New York":      {"lat": 40.7128,  "lon": -74.0060, "peak_sun_hours": 4.3},
+    "Los Angeles":   {"lat": 34.0522,  "lon": -118.2437,"peak_sun_hours": 6.1},
+    "Miami":         {"lat": 25.7617,  "lon": -80.1918, "peak_sun_hours": 5.4},
+    "Dubai":         {"lat": 25.2048,  "lon": 55.2708,  "peak_sun_hours": 6.5},
+    "Riyadh":        {"lat": 24.7136,  "lon": 46.6753,  "peak_sun_hours": 6.8},
+    "Mumbai":        {"lat": 19.0760,  "lon": 72.8777,  "peak_sun_hours": 5.5},
+    "Delhi":         {"lat": 28.6139,  "lon": 77.2090,  "peak_sun_hours": 5.2},
+    "Tokyo":         {"lat": 35.6762,  "lon": 139.6503,  "peak_sun_hours": 4.2},
+    "São Paulo":     {"lat": -23.5505, "lon": -46.6333, "peak_sun_hours": 5.1},
+    "Mexico City":   {"lat": 19.4326,  "lon": -99.1332, "peak_sun_hours": 5.8},
+    "Lagos":         {"lat": 6.5244,   "lon": 3.3792,   "peak_sun_hours": 5.3},
+    "Nairobi":       {"lat": -1.2921,  "lon": 36.8219,  "peak_sun_hours": 5.9},
+}
+
+
+def calculate_dynamic_yield(capacity_kw, panel_tilt, panel_azimuth, panel_age, lat, peak_sun_hours):
+    """
+    Compute daily yield and revenue using location-aware optimal tilt/azimuth.
+
+    - optimal_tilt  = abs(lat) * 0.87
+    - optimal_azimuth = 180 if lat >= 0 else 0
+    - Tilt loss   = 0.3% per degree deviation from optimal_tilt
+    - Azimuth loss = 0.2% per degree deviation from optimal_azimuth
+    - Age degradation = 0.5% per year (IEC standard)
+    """
+    optimal_tilt = abs(lat) * 0.87
+    optimal_azimuth = 180.0 if lat >= 0 else 0.0
+
+    # Parse panel_azimuth degrees
+    az_map = {
+        "South (180°)": 180, "Southwest (225°)": 225,
+        "Southeast (135°)": 135, "East (90°)": 90,
+        "West (270°)": 270, "North (0°)": 0,
+    }
+    panel_az_deg = az_map.get(panel_azimuth, 180)
+
+    tilt_loss_pct = abs(panel_tilt - optimal_tilt) * 0.3
+    az_loss_pct   = abs(panel_az_deg - optimal_azimuth) * 0.2
+    age_loss_pct  = panel_age * 0.5
+
+    total_loss = tilt_loss_pct + az_loss_pct + age_loss_pct
+    efficiency_factor = max(0.0, (100 - total_loss) / 100)
+
+    peak_kw     = capacity_kw * 0.18 * efficiency_factor
+    daily_mwh   = peak_kw * peak_sun_hours / 1000
+    annual_rev  = daily_mwh * 365 * 1000 * ELECTRICITY_RATE_USD
+
+    return {
+        "optimal_tilt":     optimal_tilt,
+        "optimal_azimuth":  optimal_azimuth,
+        "tilt_loss_pct":   tilt_loss_pct,
+        "az_loss_pct":     az_loss_pct,
+        "age_loss_pct":    age_loss_pct,
+        "total_loss_pct":  total_loss,
+        "efficiency_factor": efficiency_factor,
+        "peak_kw":         peak_kw,
+        "daily_mwh":       daily_mwh,
+        "annual_revenue":  annual_rev,
+    }
 
 # ------------------------------------------------------------------
 # Custom CSS
@@ -151,19 +225,35 @@ with st.form("site_config_form"):
 
     st.markdown("<div class='section-header'>🏭 Farm Identity</div>", unsafe_allow_html=True)
 
+    # Initialize session state for selected city
+    if "selected_city" not in st.session_state:
+        st.session_state.selected_city = "Singapore"
+
+    def on_city_change():
+        city = st.session_state.city_selector
+        st.session_state.selected_city = city
+        st.session_state.lat_input = CITIES[city]["lat"]
+        st.session_state.lon_input = CITIES[city]["lon"]
+
+    city_names = list(CITIES.keys())
+    default_idx = city_names.index(st.session_state.selected_city)
+
     col1, col2 = st.columns(2)
 
     with col1:
         site_name = st.text_input(
             "Site Name",
-            value="Singapore 5MW Farm",
+            value="Solar Farm",
             help="Display name for this solar installation"
         )
 
-        country = st.selectbox(
-            "Country",
-            options=["Singapore", "Indonesia", "Philippines", "Vietnam", "Thailand", "Australia"],
-            index=0
+        st.selectbox(
+            "City",
+            options=city_names,
+            index=default_idx,
+            key="city_selector",
+            on_change=on_city_change,
+            help="Select a city to auto-fill coordinates and irradiance data"
         )
 
     with col2:
@@ -171,9 +261,10 @@ with st.form("site_config_form"):
             "Latitude",
             min_value=-90.0,
             max_value=90.0,
-            value=1.3521,
+            value=st.session_state.lat_input if "lat_input" in st.session_state else CITIES[st.session_state.selected_city]["lat"],
             step=0.0001,
             format="%.4f",
+            key="lat_input",
             help="Decimal degrees, positive = North"
         )
 
@@ -181,9 +272,10 @@ with st.form("site_config_form"):
             "Longitude",
             min_value=-180.0,
             max_value=180.0,
-            value=103.8198,
+            value=st.session_state.lon_input if "lon_input" in st.session_state else CITIES[st.session_state.selected_city]["lon"],
             step=0.0001,
             format="%.4f",
+            key="lon_input",
             help="Decimal degrees, positive = East"
         )
 
@@ -251,29 +343,71 @@ with st.form("site_config_form"):
 
     st.markdown("<div class='section-header'>📊 Instant Yield Preview</div>", unsafe_allow_html=True)
 
-    # Calculate yield estimates
-    efficiency_factor = 1 - (panel_age * 0.005)
-    peak_kw = capacity_kw * 0.18 * efficiency_factor
-    daily_mwh = peak_kw * PEAK_SUN_HOURS / 1000
-    annual_revenue = daily_mwh * 365 * 1000 * ELECTRICITY_RATE_USD
+    city = st.session_state.selected_city
+    peak_sun_hours = CITIES[city]["peak_sun_hours"]
+
+    # Compute optimal yield (no tilt/azimuth/age losses)
+    optimal_peak_kw   = capacity_kw * 0.18
+    optimal_daily_mwh = optimal_peak_kw * peak_sun_hours / 1000
+    optimal_annual_rev = optimal_daily_mwh * 365 * 1000 * ELECTRICITY_RATE_USD
+
+    # Compute actual yield with dynamic losses
+    y = calculate_dynamic_yield(capacity_kw, panel_tilt, panel_azimuth, panel_age, lat, peak_sun_hours)
+
+    # Loss breakdown
+    tilt_pct   = y["tilt_loss_pct"]
+    az_pct     = y["az_loss_pct"]
+    age_pct    = y["age_loss_pct"]
+    total_loss = y["total_loss_pct"]
 
     st.markdown(f"""
     <div class="yield-preview-box">
-        <h4>📈 Estimated Output Based on Current Settings</h4>
-        <div style="display: flex; gap: 1rem; justify-content: center;">
+        <h4>📈 Yield Estimates — {city}</h4>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
             <div class="kpi-card">
-                <div class="value">{peak_kw:,.1f} kW</div>
-                <div class="label">Peak Hourly Output</div>
+                <div class="value" style="color:#22C55E;">{optimal_peak_kw:,.1f} kW</div>
+                <div class="label">★ Optimal Peak Output</div>
+                <div class="label" style="font-size:0.75rem;">tilt={y["optimal_tilt"]:.1f}° · az={y["optimal_azimuth"]:.0f}°</div>
             </div>
             <div class="kpi-card">
-                <div class="value">{daily_mwh:.2f} MWh</div>
-                <div class="label">Est. Daily Output</div>
+                <div class="value" style="color:#F4A836;">{y["peak_kw"]:,.1f} kW</div>
+                <div class="label">⚡ Actual Peak Output</div>
+                <div class="label" style="font-size:0.75rem;">-{total_loss:.1f}% total loss</div>
             </div>
             <div class="kpi-card">
-                <div class="value">${annual_revenue:,.0f}</div>
-                <div class="label">Est. Annual Revenue</div>
+                <div class="value" style="color:#22C55E;">{optimal_daily_mwh:.2f} MWh</div>
+                <div class="label">★ Optimal Daily Yield</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value" style="color:#F4A836;">{y["daily_mwh"]:.2f} MWh</div>
+                <div class="label">⚡ Actual Daily Yield</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value" style="color:#22C55E;">${optimal_annual_rev:,.0f}</div>
+                <div class="label">★ Optimal Annual Revenue</div>
+            </div>
+            <div class="kpi-card">
+                <div class="value" style="color:#F4A836;">${y["annual_revenue"]:,.0f}</div>
+                <div class="label">⚡ Actual Annual Revenue</div>
             </div>
         </div>
+        <div style="margin-top:1rem; font-size:0.85rem; color:#555;">
+            <strong>Loss Breakdown:</strong>
+            Tilt −{tilt_pct:.1f}% &nbsp;|&nbsp;
+            Azimuth −{az_pct:.1f}% &nbsp;|&nbsp;
+            Age −{age_pct:.1f}% &nbsp;|&nbsp;
+            <strong>Total −{total_loss:.1f}%</strong>
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <strong>Eff:</strong> {y["efficiency_factor"]*100:.1f}%
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="info-note">
+        ℹ️ Optimal tilt = |{lat:.2f}°| × 0.87 = <strong>{y["optimal_tilt"]:.1f}°</strong> ·
+        Optimal azimuth = <strong>{y["optimal_azimuth"]:.0f}°</strong> ({city} is in the {'Northern' if lat >= 0 else 'Southern'} hemisphere) ·
+        Peak sun hours for {city}: <strong>{peak_sun_hours}</strong>
     </div>
     """, unsafe_allow_html=True)
 
@@ -285,15 +419,14 @@ with st.form("site_config_form"):
 
     st.markdown("<div class='section-header'>🌐 Multi-Site Management</div>", unsafe_allow_html=True)
 
-    # Pre-configured demo sites — Singapore HQ derives from slider
-    singapore_daily_mwh = capacity_kw * 0.000936
+    # Pre-configured demo sites — Singapore HQ derives from live slider
     demo_sites = [
         {
             "Site Name": "Singapore HQ",
             "Location": "1.3521°N, 103.8198°E",
             "Capacity (kWp)": capacity_kw,
             "Age (years)": panel_age,
-            "Est. Daily MWh": f"{singapore_daily_mwh:.2f}",
+            "Est. Daily MWh": f"{y['daily_mwh']:.2f}",
             "Status": '<span class="status-active">Active</span>'
         },
         {
