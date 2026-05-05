@@ -231,9 +231,15 @@ if "lon_input" not in st.session_state:
 if "multi_site_extra_rows" not in st.session_state:
     st.session_state.multi_site_extra_rows = []
 
+# Pre-compute active site name for subheader (set properly in Section 4)
+_active_site_name = st.session_state.get("active_site_name", "Solar Farm")
+
 # ------------------------------------------------------------------
 # SECTION 1: Farm Identity
 # ------------------------------------------------------------------
+
+# Dynamic heading reflects the currently selected site
+st.subheader(f"✏️ Editing: {_active_site_name}")
 
 st.markdown("<div class='section-header'>🏭 Farm Identity</div>", unsafe_allow_html=True)
 
@@ -428,6 +434,33 @@ st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 # SECTION 4: Multi-Site Management
 # ------------------------------------------------------------------
 
+# --- Selection state: sync Farm Identity when user checks a row ---
+if "selected_row" not in st.session_state:
+    st.session_state.selected_row = 0  # row 0 = primary site selected by default
+
+# If user changed selection, update Farm Identity from that row
+if st.session_state.selected_row is not None and st.session_state.selected_row > 0:
+    sel_idx = st.session_state.selected_row
+    sel_df = st.session_state.get("sites_df")
+    sel_extra = st.session_state.multi_site_extra_rows
+    if sel_df is not None:
+        all_rows = [{"Site Name": _display_name, "Capacity (kWp)": capacity_kw, "Age (years)": panel_age}] + \
+                   sel_df.to_dict("records")
+        if sel_extra:
+            all_rows += sel_extra
+        if sel_idx < len(all_rows):
+            row = all_rows[sel_idx]
+            matched = next((c for c in CITIES if c.lower() in str(row.get("Site Name", "")).lower()), None)
+            if matched and matched != st.session_state.selected_city:
+                st.session_state.selected_city = matched
+                st.session_state.lat_input = CITIES[matched]["lat"]
+                st.session_state.lon_input = CITIES[matched]["lon"]
+            site_name = str(row.get("Site Name", "Solar Farm"))
+            st.session_state.active_site_name = site_name
+else:
+    st.session_state.active_site_name = _display_name
+
+
 st.markdown("<div class='section-header'>🌐 Multi-Site Management</div>", unsafe_allow_html=True)
 
 # --- Build sites_df: static base rows (Jakarta, Manila) stored in session ---
@@ -449,6 +482,7 @@ _display_name = site_name.strip() if site_name and site_name.strip() else "Solar
 
 # --- Build display_df: Row 0 synced from Farm Identity + user-added rows ---
 primary_row = pd.DataFrame([{
+    "Select":          True,  # row 0 is always the "active" site
     "Site Name":       _display_name,
     "Location":        f"{lat:.4f}°, {lon:.4f}°",
     "Capacity (kWp)":  capacity_kw,
@@ -461,13 +495,19 @@ primary_row = pd.DataFrame([{
 user_added_rows = st.session_state.multi_site_extra_rows
 if user_added_rows:
     user_df = pd.DataFrame(user_added_rows)
+    user_df.insert(0, "Select", False)  # unchecked by default
 else:
-    user_df = pd.DataFrame(columns=st.session_state.sites_df.columns)
+    user_df = pd.DataFrame(columns=["Select"] + list(st.session_state.sites_df.columns))
 
-display_df = pd.concat([primary_row, st.session_state.sites_df, user_df], ignore_index=True)
+display_df = pd.concat([primary_row, st.session_state.sites_df.assign(Select=False), user_df], ignore_index=True)
 
 # --- Column config ---
 col_config = {
+    "Select": st.column_config.CheckboxColumn(
+        "Select",
+        help="Check to load site into Farm Identity above",
+        width="small",
+    ),
     "Site Name": st.column_config.TextColumn(
         "Site Name",
         help="★ Row 0 (Primary Site) is auto-synced from Farm Identity above",
@@ -502,13 +542,25 @@ result = st.data_editor(
 
 # --- Capture edits: rebuild extra rows (rows 3+) and persist ---
 total_static = 1 + len(st.session_state.sites_df)  # 1 primary + N base rows
+
+# Drop completely empty rows (user clicked + but left it blank)
 if len(result) > total_static:
     extra = result.iloc[total_static:].copy()
-    extra.loc[:, "Capacity (kWp)"] = extra["Capacity (kWp)"].astype(int)
-    extra.loc[:, "Age (years)"] = extra["Age (years)"].astype(int)
-    st.session_state.multi_site_extra_rows = extra.to_dict("records")
+    extra = extra.dropna(subset=["Capacity (kWp)"])  # drop empty new rows before astype
+    if len(extra) > 0:
+        extra["Capacity (kWp)"] = extra["Capacity (kWp)"].astype(int)
+        extra["Age (years)"] = extra["Age (years)"].astype(int)
+    st.session_state.multi_site_extra_rows = extra.to_dict("records") if len(extra) > 0 else []
 else:
     st.session_state.multi_site_extra_rows = []
+
+# --- Track which row is "selected" (checked) for Farm Identity sync ---
+result_select = st.session_state.get("main_site_editor", {})
+if isinstance(result_select, pd.DataFrame) and "Select" in result_select.columns:
+    checked_rows = result_select[result_select["Select"] == True].index.tolist()
+    st.session_state.selected_row = checked_rows[0] if checked_rows else 0
+else:
+    st.session_state.selected_row = 0  # default to primary site
 
 st.markdown(
     "<div class='info-note'>💡 Row 0 (★ Primary Site) syncs from Farm Identity above — "
