@@ -224,6 +224,17 @@ if "lat_input" not in st.session_state:
 if "lon_input" not in st.session_state:
     st.session_state.lon_input = CITIES["Singapore"]["lon"]
 
+# Initialize multi-site table data (done once; synced to Farm Identity every run)
+if "multi_site_df" not in st.session_state:
+    st.session_state.multi_site_df = pd.DataFrame({
+        "Site Name":       pd.Series(["Singapore HQ", "Jakarta Plant", "Manila Farm"], dtype="string"),
+        "Location":        pd.Series(["1.3521°, 103.8198°", "-6.2088°, 106.8456°", "14.5995°, 120.9842°"], dtype="string"),
+        "Capacity (kWp)":  pd.Series([5000, 3000, 8000], dtype="Int64"),
+        "Age (years)":     pd.Series([0, 2, 1], dtype="Int64"),
+        "Est. Daily MWh":  pd.Series(["4.68", "2.59", "7.06"], dtype="string"),
+        "Status":          pd.Series(["Active", "Standby", "Standby"], dtype="string"),
+    })
+
 # ------------------------------------------------------------------
 # SECTION 1: Farm Identity
 # ------------------------------------------------------------------
@@ -423,67 +434,92 @@ st.markdown("<hr class='amber-divider'>", unsafe_allow_html=True)
 
 st.markdown("<div class='section-header'>🌐 Multi-Site Management</div>", unsafe_allow_html=True)
 
-demo_sites = [
-    {
-        "Site Name": "Singapore HQ",
-        "Location": "1.3521°N, 103.8198°E",
-        "Capacity (kWp)": capacity_kw,
-        "Age (years)": panel_age,
-        "Est. Daily MWh": f"{y['daily_mwh']:.2f}",
-        "Status": '<span class="status-active">Active</span>'
-    },
-    {
-        "Site Name": "Jakarta Plant",
-        "Location": "-6.2088°S, 106.8456°E",
-        "Capacity (kWp)": 3000,
-        "Age (years)": 2,
-        "Est. Daily MWh": f"{3000 * 0.18 * 0.99 * CITIES['Jakarta']['peak_sun_hours'] / 1000:.2f}",
-        "Status": '<span class="status-standby">Standby</span>'
-    },
-    {
-        "Site Name": "Manila Farm",
-        "Location": "14.5995°N, 120.9842°E",
-        "Capacity (kWp)": 8000,
-        "Age (years)": 1,
-        "Est. Daily MWh": f"{8000 * 0.18 * 0.995 * CITIES['Manila']['peak_sun_hours'] / 1000:.2f}",
-        "Status": '<span class="status-standby">Standby</span>'
-    },
-]
+# Get any user-added rows from prior sessions
+prior_df = st.session_state.get("multi_site_df")
+if prior_df is not None and len(prior_df) > 3:
+    user_added = prior_df.iloc[3:].copy().reset_index(drop=True)
+else:
+    user_added = pd.DataFrame()
 
-st.markdown("""
-<table class="site-table">
-    <thead>
-        <tr>
-            <th>Site Name</th>
-            <th>Location</th>
-            <th>Capacity (kWp)</th>
-            <th>Age (years)</th>
-            <th>Est. Daily MWh</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-""", unsafe_allow_html=True)
+# Build row 0 from live Farm Identity
+primary_row = pd.DataFrame([{
+    "Site Name":       site_name,
+    "Location":        f"{lat:.4f}°, {lon:.4f}°",
+    "Capacity (kWp)":  capacity_kw,
+    "Age (years)":     panel_age,
+    "Est. Daily MWh":  f"{y['daily_mwh']:.2f}",
+    "Status":          "Active",
+}])
 
-for site in demo_sites:
-    st.markdown(f"""
-        <tr>
-            <td>{site['Site Name']}</td>
-            <td>{site['Location']}</td>
-            <td>{site['Capacity (kWp)']:,}</td>
-            <td>{site['Age (years)']}</td>
-            <td>{site['Est. Daily MWh']}</td>
-            <td>{site['Status']}</td>
-        </tr>
-    """, unsafe_allow_html=True)
+# Build full table: row 0 + user-added rows
+if not user_added.empty:
+    display_df = pd.concat([primary_row, user_added], ignore_index=True)
+else:
+    display_df = primary_row.copy()
 
-st.markdown("""
-    </tbody>
-</table>
-""", unsafe_allow_html=True)
+# Column display config
+col_config = {
+    "Site Name": st.column_config.TextColumn(
+        "Site Name",
+        help="★ Row 0 is auto-synced from Farm Identity",
+        width="medium",
+    ),
+    "Location": st.column_config.TextColumn(
+        "Location",
+        help="★ Row 0 is auto-synced from Farm Identity",
+        width="medium",
+    ),
+    "Capacity (kWp)": st.column_config.NumberColumn(
+        "Capacity (kWp)",
+        min_value=0,
+        max_value=500000,
+        format="%,.0f",
+        width="small",
+    ),
+    "Age (years)": st.column_config.NumberColumn(
+        "Age (years)",
+        min_value=0,
+        max_value=50,
+        format="%d",
+        width="small",
+    ),
+    "Est. Daily MWh": st.column_config.TextColumn(
+        "Est. Daily MWh",
+        width="small",
+    ),
+    "Status": st.column_config.SelectboxColumn(
+        "Status",
+        options=["Active", "Standby", "Decommissioned"],
+        width="small",
+    ),
+}
+
+st.data_editor(
+    display_df,
+    column_config=col_config,
+    use_container_width=True,
+    hide_index=False,
+    num_rows="dynamic",
+    key="multi_site_editor",
+)
+
+# Capture user's edited dataframe; re-apply Farm Identity to row 0 before saving
+# safe to read: only exists after data_editor has been mounted once
+edited_df = st.session_state.get("multi_site_editor", display_df.copy())
+
+# Restore row 0 from live Farm Identity (user cannot overwrite row 0)
+edited_df.at[0, "Site Name"]       = site_name
+edited_df.at[0, "Location"]        = f"{lat:.4f}°, {lon:.4f}°"
+edited_df.at[0, "Capacity (kWp)"]  = capacity_kw
+edited_df.at[0, "Age (years)"]      = panel_age
+edited_df.at[0, "Est. Daily MWh"]  = f"{y['daily_mwh']:.2f}"
+edited_df.at[0, "Status"]           = "Active"
+
+st.session_state.multi_site_df = edited_df
 
 st.markdown(
-    "<div class='info-note'>💡 Enterprise plan supports unlimited sites. Contact us to add your installation.</div>",
+    "<div class='info-note'>💡 Row 0 (★ Primary Site) is always synced from Farm Identity above. "
+    "Rows 1+ are editable. Use + to add new sites.</div>",
     unsafe_allow_html=True
 )
 
